@@ -24,6 +24,6 @@ application {
 }
 
 run {
-    args = ['--input', 'data.txt', '--verbose']
+    args = ['-help']
 }
 
