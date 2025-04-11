@@ -84,34 +84,21 @@ java CompilationApp -i src/main.sc -o out/main.pain -target asm
 
 ```mermaid
 classDiagram
+    %% === Helper ===
+    class PositionInFile {
+        +int row
+        +int col
+        +PositionInFile(int row, int col)
+        +String toString()
+    }
+
+    %% === CLI ===
     class CompilationApp {
         +main(String[] args) void
         -handleHelpFlag() void
         -handleVersionFlag() void
         -shouldRunCompilation() boolean
         -printError(String message) void
-    }
-
-    class CompilationOptions {
-        <<static>>
-        +List~String~ inputFiles
-        +String outputFile
-        +boolean compileSeparately
-        +boolean printAST
-        +boolean dumpLogs
-        +boolean printHelp
-        +boolean printVersion
-        +boolean printTime
-        +boolean verifyOnly
-        +String target
-        +File logFile
-    }
-
-    class CompilationEngine {
-        +run() void
-        -prepareFiles() void
-        -runCompilerPipeline() void
-        -cleanupTemporaryFiles() void
     }
 
     class ArgumentParser {
@@ -124,28 +111,85 @@ classDiagram
         +log(String message) void
         +error(String message) void
         +flushAndClose() void
-        -File logFile
+        -Path logFile
         -BufferedWriter writer
+    }
+
+    %% === Compiler Core ===
+    class CompilationEngine {
+        <<static>>
+        +run() void
+        -prepareFiles() void
+        -runCompilerPipeline() void
+        -cleanupTemporaryFiles() void
+        -mergeLogs(List~Path~ logFiles) void
+        -checkAndAbortIfErrors(CompilerLogger logger, String phase) void
+    }
+
+    class Compiler {
+        +compileUnit(Path source) void
+        -loadSource(Path path) String
+        -generateOutput(AST ast) void
+        -CompilerLogger logger
+    }
+
+    class Preprocessor {
+        +process(Path source) Path
+        -resolveInclude(String path) String
+        -isAlreadyIncluded(String path) boolean
+        -includedFiles : Set~String~
     }
 
     class CompilerLogger {
-        +log(String message) void
-        +warn(String message) void
-        +error(String message) void
+        +log(String message, Path file, PositionInFile pos) void
+        +warn(String message, Path file, PositionInFile pos) void
+        +error(String message, Path file, PositionInFile pos) void
         +flushAndClose() void
-        -File logFile
+        +int getErrorCount() int
+        +List~String~ getErrorMessages()
+        +void printErrorsToConsole(int max)
+        +Path getLogFile()
+        -List~String~ errors
+        -Path logFile
         -BufferedWriter writer
     }
 
+    %% === Util ===
+    class CompilationOptions {
+        <<static>>
+        +List~Path~ inputFiles
+        +Path outputFile
+        +boolean compileSeparately
+        +boolean printAST
+        +boolean dumpLogs
+        +boolean printHelp
+        +boolean printVersion
+        +boolean printTime
+        +boolean verifyOnly
+        +String target
+        +Path logFile
+    }
+
+    %% === Beziehungen ===
     CompilationApp --> ArgumentParser : uses
     ArgumentParser --> CompilationOptions : sets
     CompilationApp --> CompilationEngine : calls run()
-    CompilationEngine --> CompilationOptions : reads
     CompilationApp --> CliLogger : uses
-    CompilationEngine --> CompilerLogger : uses
 
-    CliLogger --> CompilationOptions : uses logFile
+    CompilationEngine --> CompilationOptions : reads
+    CompilationEngine --> Compiler : delegates to
+    CompilationEngine --> CompilerLogger : merges from many
+    CompilationEngine --> CliLogger : uses for summary
+
+    Compiler --> Preprocessor : uses
+    Compiler --> CompilerLogger : uses
+    Compiler --> CompilationOptions : reads
+
     CompilerLogger --> CompilationOptions : uses logFile
+    CompilerLogger --> PositionInFile : uses
+    CliLogger --> CompilationOptions : uses logFile
+    Preprocessor --> CompilationOptions : reads
+
 ```
 
 </details>
