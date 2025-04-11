@@ -18,6 +18,18 @@ src/
 │   └── CompilationOptions.java
 ```
 
+```
+java CompilationApp -help
+
+# Compile
+java CompilationApp -i src/main.sc -o out/main.pain
+
+# Print AST
+java CompilationApp -i src/main.sc -ast
+
+# Compile with timing and logging
+java CompilationApp -i src/main.sc -o out/main.pain -time -log
+```
 ---
 
 ## 🧪 Usage
@@ -26,32 +38,42 @@ src/
 # Show help
 java CompilationApp -help
 
-# Compile
-java CompilationApp -i src/main.my -o out/main.bc
+# Compile a complete project
+java CompilationApp -i src/main.sc -o out/main.pain
 
-# Print AST
-java CompilationApp -i src/main.my -ast
+# Print AST only
+java CompilationApp -i src/main.sc -ast
 
-# Compile with timing and logging
-java CompilationApp -i src/main.my -o out/main.bc -time -log
+# Verify syntax without generating output
+java CompilationApp -i src/main.sc -verify
+
+# Compile with time measurement and logging
+java CompilationApp -i src/main.sc -o out/main.pain -time -log
+
+# Compile separately
+java CompilationApp -i src/utils.sc -o out/utils.pain -c
+java CompilationApp -i src/main.sc -o out/main.pain -c
+
+# Generate x86 assembly output
+java CompilationApp -i src/main.sc -o out/main.pain -target asm
 ```
 
 ---
 
 ## ⚙️ Options (`CompilationOptions`)
 
-| Option      | Parameter           | Description                                              |
-|-------------|---------------------|----------------------------------------------------------|
-| `-help`     | *(none)*            | Displays this help screen                                |
-| `-i`        | `<source-file(s)>`  | Input source files                                       |
-| `-o`        | `<output-file>`     | Output file                                              |
-| `-c`        | *(none)*            | Compile each file separately                             |
-| `-version`  | *(none)*            | Shows the current version                                |
-| `-time`     | *(none)*            | Displays compilation time                                |
-| `-ast`      | *(none)*            | Writes AST to file                                       |
-| `-log`      | *(none)*            | Keeps the log file after compilation                     |
-| `-verify`   | *(none)*            | Syntax check only, no code generation                    |
-| `-target`   | `<target-name>`     | Defines the target system to compile to (default: `sm`)  |
+| Option      | Parameter           | Description                                                                                          |
+|-------------|---------------------|------------------------------------------------------------------------------------------------------|
+| `-help`     | *(none)*            | Displays this help screen                                                                            |
+| `-i`        | `<source-file(s)>`  | Input source files                                                                                   |
+| `-o`        | `<output-file>`     | Output file                                                                                          |
+| `-c`        | *(none)*            | Compile each file separately                                                                         |
+| `-version`  | *(none)*            | Shows the current version                                                                            |
+| `-time`     | *(none)*            | Displays compilation time                                                                            |
+| `-ast`      | *(none)*            | Writes AST to file                                                                                   |
+| `-log`      | *(none)*            | Keeps the log file after compilation                                                                 |
+| `-verify`   | *(none)*            | Syntax check only, no code generation                                                                |
+| `-target`   | `<target-name>`     | Defines the target system to compile to (default: `sm`)<br/> use `asm` to generate assembly x86 code |
 
 ---
 
@@ -134,7 +156,7 @@ classDiagram
 
 ```text
 out/
-├── main.bc           ← Compiled bytecode
+├── main.pain           ← Compiled target (.pain) file
 ├── main.ast.txt      ← AST dump
 ├── main.log.txt      ← CLI log file
 ```
