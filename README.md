@@ -1,8 +1,12 @@
-# 🔧 Java Compiler Project
+# 🔧 Java Compiler Project (Schiemens Compiler)
 
 A fully custom-built compiler in Java, including all major phases: CLI processing, preprocessing, lexing, parsing, parse tree construction, AST generation, logging, and target code output.
 
 This compiler is designed to support LL(1) recursive descent parsing, file-based memory efficiency, robust logging with phase control, and extensible architecture for future phases such as semantic analysis and optimization.
+
+The name "Schiemens" is a playful nod to the famous enterprise "Siemens", but this project is not affiliated with them in any way.
+I just hate Siemens products they are overused and overpriced. Especially TIA-Portal and WinCC.
+The project is a learning-oriented compiler, built from scratch to understand the intricacies of compiler design and implementation.
 
 ---
 
@@ -120,6 +124,9 @@ java CompilationApp -i src/main.sc -o out/main.pain -target asm
 ---
 
 ## 📊 Class Diagram
+
+<details>
+<summary><strong>Show Diagram</strong></summary>
 
 ```mermaid
 
@@ -319,7 +326,7 @@ classDiagram
     CliLogger --> CompilationOptions : uses logFile
     Preprocessor --> CompilationOptions : reads
 ```
-
+</details>
 ## 📍 License & Contributions
 
 > This project is a learning-oriented compiler built in Java. Feel free to fork, test, improve!
