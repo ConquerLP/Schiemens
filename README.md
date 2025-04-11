@@ -1,66 +1,89 @@
 # 🔧 Java Compiler Project
 
-A fully custom-built compiler in Java, including a lexer, parser, AST, code generator, virtual machine, and command-line interface.
+A fully custom-built compiler in Java, including all major phases: CLI processing, preprocessing, lexing, parsing, parse tree construction, AST generation, logging, and target code output.
 
-## 📦 Module Structure
+This compiler is designed to support LL(1) recursive descent parsing, file-based memory efficiency, robust logging with phase control, and extensible architecture for future phases such as semantic analysis and optimization.
+
+---
+
+## 📦 Modular Package Structure
 
 ```text
 src/
-├── cli/                → Command-line interface (CLI)
-│   ├── CompilationApp.java
-│   ├── ArgumentParser.java
-│   └── CliLogger.java
-├── compiler/           → Compiler logic
-│   ├── CompilationEngine.java
-│   ├── CompilerLogger.java
-│   ├── Lexer.java, Parser.java, ASTNode.java, ...
-├── util/               → Helper functions & logging
-│   └── CompilationOptions.java
+├── cli/                    → Command-line interface (UI layer)
+│   ├── CompilationApp.java        # Entry point (main)
+│   ├── ArgumentParser.java        # CLI argument parsing
+│   └── CliLogger.java             # CLI-specific logging
+
+├── core/                   → High-level orchestration and execution
+│   ├── CompilationEngine.java     # Entry point for the full pipeline
+│   ├── Compiler.java              # Compiles a single compilation unit
+
+├── preprocessor/           → Preprocessing of source files
+│   └── Preprocessor.java          # Handles `#include` with once-only logic
+
+├── lexer/                  → Lexical analysis
+│   ├── Lexer.java                 # Tokenizes the source code
+│   ├── Token.java                # Represents individual tokens
+│   ├── TokenType.java            # Enumerates token categories
+│   └── TokenStream.java          # Facilitates LL(1) token access
+
+├── parser/                 → Syntax analysis
+│   ├── Parser.java                # LL(1) recursive descent parser
+│   ├── ParseTree.java            # Parse tree nodes (syntax-preserving)
+
+├── ast/                    → Abstract syntax tree representation
+│   └── ASTNode.java              # Root type and its subclasses (to be extended)
+
+├── logging/                → Compiler-internal structured logging
+│   ├── CompilerLogger.java       # Logs errors and warnings per compilation unit
+│   └── CliLogger.java            # Shared with CLI (or move if strictly needed)
+
+├── util/                   → Utility classes and shared options
+│   ├── CompilationOptions.java   # Static config parsed from CLI
+│   └── PositionInFile.java       # Tracks row/col within source files
+
+├── grammar/                → Language grammar and documentation
+│   ├── Grammar.md                # Formal grammar definition
+│   └── Notes.txt                 # Drafts and grammar notes
+
+└── exception/              → Domain-specific exceptions
+    ├── CompilerException.java    # Fatal compiler-level errors
+    ├── LexicalException.java     # Thrown during lexing
+    └── ParseException.java       # Thrown during parsing
 ```
 
-```
-java CompilationApp -help
-
-# Compile
-java CompilationApp -i src/main.sc -o out/main.pain
-
-# Print AST
-java CompilationApp -i src/main.sc -ast
-
-# Compile with timing and logging
-java CompilationApp -i src/main.sc -o out/main.pain -time -log
-```
 ---
 
-## 🧪 Usage
+## 🧪 CLI Usage
 
 ```bash
-# Show help
+# Show help screen
 java CompilationApp -help
 
-# Compile a complete project
+# Compile a full project
 java CompilationApp -i src/main.sc -o out/main.pain
 
-# Print AST only
-java CompilationApp -i src/main.sc -ast
-
-# Verify syntax without generating output
+# Only verify syntax
 java CompilationApp -i src/main.sc -verify
+
+# Print AST to file
+java CompilationApp -i src/main.sc -ast
 
 # Compile with time measurement and logging
 java CompilationApp -i src/main.sc -o out/main.pain -time -log
 
-# Compile separately
+# Compile separately (independent units)
 java CompilationApp -i src/utils.sc -o out/utils.pain -c
 java CompilationApp -i src/main.sc -o out/main.pain -c
 
-# Generate x86 assembly output
+# Compile to assembly output
 java CompilationApp -i src/main.sc -o out/main.pain -target asm
 ```
 
 ---
 
-## ⚙️ Options (`CompilationOptions`)
+## ⚙️ Compiler Options
 
 | Option      | Parameter           | Description                                                                                          |
 |-------------|---------------------|------------------------------------------------------------------------------------------------------|
@@ -77,12 +100,29 @@ java CompilationApp -i src/main.sc -o out/main.pain -target asm
 
 ---
 
-## 📊 Architecture – Class Diagram
+## 🔁 Preprocessing with `#include`
 
-<details>
-<summary><strong>Show Diagram</strong></summary>
+`.sc` source files support a single directive: `#include "file.sc"`. Each file is only included once to avoid duplication.
+
+- Recursive and cyclic includes are handled
+- Preprocessing is phase 1 of compilation
+- Includes are fully expanded before lexing
+
+---
+
+## 🧠 Architecture Notes
+
+- Only AST and tree structures are kept in memory
+- Source files, logs, and token streams are file-based
+- Temporary files are deleted unless `-log` or `-ast` is active
+- Errors from lexer/parser/AST are printed to the console (first 20) and logged
+
+---
+
+## 📊 Class Diagram
 
 ```mermaid
+
 classDiagram
     %% === Helper ===
     class PositionInFile {
@@ -279,31 +319,6 @@ classDiagram
     CliLogger --> CompilationOptions : uses logFile
     Preprocessor --> CompilationOptions : reads
 ```
-
-</details>
-
----
-
-## 🗂 Example Output (with `-log` and `-ast`)
-
-```text
-out/
-├── main.pain           ← Compiled target (.pain) file
-├── main.ast.txt      ← AST dump
-├── main.log.txt      ← CLI log file
-```
-
-Temporary files like `lexer.tmp`, `parser.tmp` are automatically deleted unless debugging is enabled.
-
----
-
-## 🧠 Notes
-
-- Only ASTs and related trees are kept in memory.
-- Source code, tokens, logs, etc. are written to disk.
-- Temporary files go to `temp/`, logs and output to `out/`.
-
----
 
 ## 📍 License & Contributions
 
