@@ -21,6 +21,7 @@ public class CompileOptions {
     private static final Set<File> inputFiles = new LinkedHashSet<>();
 
     private CompileOptions() {
+
     }
 
     public static CompileOptions getInstance() {

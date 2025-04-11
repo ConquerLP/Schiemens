@@ -1,6 +1,6 @@
 package ch.codegen.cli;
 
-import ch.codegen.compiler.compileEngine.CompileEngine;
+import ch.codegen.compiler.compilationEngine.CompileEngine;
 
 import java.util.*;
 

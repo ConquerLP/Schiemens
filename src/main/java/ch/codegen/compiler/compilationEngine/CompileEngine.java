@@ -1,4 +1,4 @@
-package ch.codegen.compiler.compileEngine;
+package ch.codegen.compiler.compilationEngine;
 
 import ch.codegen.cli.CompileOptions;
 import ch.codegen.util.LoggerCli;
