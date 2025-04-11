@@ -1,10 +1,12 @@
 package ch.codegen.cli;
 
+import ch.codegen.compiler.compilationEngine.CompileEngine;
+
 import java.util.*;
 
 public class CompilationApp {
 
-    private static final String FORMAT = "\t%-15s %-25s %s%n";
+    private static final String FORMAT_HELP = "\t%-15s %-25s %s%n";
     private static final String VERSION = "1.0.69";
 
     public static void main(String[] args) {
@@ -14,6 +16,8 @@ public class CompilationApp {
         }
 
         Map<String, String> options = parseArgs(args);
+        // after CompileOptions.parseArguments(options);
+        // CompileEngine.dump()
         if (options.containsKey("-help")) {
             printHelp();
             return;
@@ -23,7 +27,7 @@ public class CompilationApp {
             return;
         }
         CompileOptions.parseArguments(options);
-
+        CompileEngine.run();
 
 
 
@@ -47,6 +51,7 @@ public class CompilationApp {
         printOption("-help", "", "Shows helping screen");
         printOption("-i", "<source-file(s)>", "Specify the input source file(s)");
         printOption("-o", "<output-file>", "Specify the output file");
+        printOption("-c", "", "Compile files separately");
         printOption("-version", "", "Shows the current version");
         printOption("-time", "", "Shows compilation time");
         printOption("-ast", "", "Dumps the AST into the specified outputfile");
@@ -56,7 +61,7 @@ public class CompilationApp {
     }
 
     private static void printOption(String flag, String param, String description) {
-        System.out.printf(FORMAT, flag, param, description);
+        System.out.printf(FORMAT_HELP, flag, param, description);
     }
 
 }

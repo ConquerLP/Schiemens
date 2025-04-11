@@ -16,10 +16,12 @@ public class CompileOptions {
     private static boolean log = false;
     private static boolean time = false;
     private static boolean verify = false;
+    private static boolean singleCompilation = false;
     private static String target = "sm";
     private static final Set<File> inputFiles = new LinkedHashSet<>();
 
     private CompileOptions() {
+
     }
 
     public static CompileOptions getInstance() {
@@ -31,6 +33,7 @@ public class CompileOptions {
         log = options.containsKey("-log");
         time = options.containsKey("-time");
         verify = options.containsKey("-verify");
+        singleCompilation = options.containsKey("-c");
         if (options.containsKey("-target")) {
             String t = options.get("-target");
             if (t != null && !t.isEmpty()) {
@@ -114,6 +117,10 @@ public class CompileOptions {
 
     public static String getTarget() {
         return target;
+    }
+
+    public static boolean isSingleCompilation() {
+        return singleCompilation;
     }
 
     public static List<File> getInputFiles() {

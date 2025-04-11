@@ -1,20 +1,19 @@
-package ch.codegen.compiler.compileEngine;
+package ch.codegen.compiler.compilationEngine;
 
 import ch.codegen.cli.CompileOptions;
 import ch.codegen.util.LoggerCli;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
 public class CompileEngine {
 
-    private final CompileOptions options = CompileOptions.getInstance();
+    private static final CompileOptions options = CompileOptions.getInstance();
     private final Preprocessor preprocessor = new Preprocessor();
     private final Compiler compiler = new Compiler();
 
-    public void run() {
+    public static void run() {
         List<File> sources = options.getInputFiles();
 
         if (sources.isEmpty()) {
@@ -22,17 +21,22 @@ public class CompileEngine {
             return;
         }
 
-        if (options.isCompileSeparately()) {
-            compileEachIndividually(sources);
+        if (options.isSingleCompilation()) {
+            compileIndividually(sources);
         } else {
-            compileAsSingleUnit(sources);
+            compileWhole(sources);
         }
     }
 
-    private void compileAsSingleUnit(List<File> sources) {
+    // dumps all logs etc. if specified (options)
+    public static void dump() {
+
+
+    }
+
+    private static void compileWhole(List<File> sources) {
         File entry = options.getEntryFile() != null ? options.getEntryFile() : sources.get(0);
         LoggerCli.info("Compiling as single unit, entry file: " + entry.getName());
-
         try {
             String code = preprocessor.process(entry);
             File out = options.getOutputFile() != null ? options.getOutputFile() : new File(entry.getName() + ".out");
@@ -42,16 +46,14 @@ public class CompileEngine {
         }
     }
 
-    private void compileEachIndividually(List<File> sources) {
+    private static void compileIndividually(List<File> sources) {
         LoggerCli.info("Compiling each file separately...");
-
         for (File file : sources) {
             try {
                 String code = preprocessor.process(file);
                 File out = options.getOutputFile() != null
                         ? new File(options.getOutputFile(), file.getName() + ".out")
                         : new File(file.getName() + ".out");
-
                 compiler.compile(code, out);
             } catch (IOException e) {
                 LoggerCli.warn("Failed to compile " + file.getName() + ": " + e.getMessage());
