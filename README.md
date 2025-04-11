@@ -92,6 +92,19 @@ classDiagram
         +String toString()
     }
 
+    %% === Exceptions ===
+    class CompilerException {
+        +CompilerException(String message)
+    }
+
+    class LexicalException {
+        +LexicalException(String message, PositionInFile pos)
+    }
+
+    class ParseException {
+        +ParseException(String message, PositionInFile pos)
+    }
+
     %% === CLI ===
     class CompilationApp {
         +main(String[] args) void
@@ -128,16 +141,18 @@ classDiagram
 
     class Compiler {
         +compileUnit(Path source) void
-        -loadSource(Path path) String
-        -generateOutput(AST ast) void
+        -Path runPreprocessor(Path source) throws CompilerException
+        -List~Token~ runLexer(Path processedFile) throws LexicalException, CompilerException
+        -ParseTree runParser(List~Token~ tokens) throws ParseException
+        -generateOutput(ASTNode ast) void
         -CompilerLogger logger
     }
 
     class Preprocessor {
-        +process(Path source) Path
-        -resolveInclude(String path) String
-        -isAlreadyIncluded(String path) boolean
-        -includedFiles : Set~String~
+        +Path process(Path source) throws CompilerException
+        -String resolveInclude(String path)
+        -boolean isAlreadyIncluded(String path)
+        -Set~String~ includedFiles
     }
 
     class CompilerLogger {
@@ -152,6 +167,60 @@ classDiagram
         -List~String~ errors
         -Path logFile
         -BufferedWriter writer
+    }
+
+    %% === Lexer/Parser ===
+    class TokenType {
+        <<enum>>
+        +KEYWORD_IF
+        +IDENTIFIER
+        +NUMBER
+        +PLUS
+        +MINUS
+        +EQUAL
+        +LPAREN
+        +RPAREN
+        +EOF
+        +...
+    }
+
+    class Token {
+        +TokenType type
+        +String value
+        +PositionInFile position
+        +Path sourceFile
+    }
+
+    class TokenStream {
+        +Token peek()
+        +Token advance()
+        +boolean isAtEnd()
+        -List~Token~ tokens
+        -int position
+    }
+
+    class Lexer {
+        <<static>>
+        +List~Token~ tokenize(Path sourceFile) throws LexicalException, CompilerException
+    }
+
+    class Parser {
+        +Parser(TokenStream stream, CompilerLogger logger)
+        +ParseTree parseProgram()
+        -Token current
+        -CompilerLogger logger
+        -TokenStream stream
+    }
+
+    class ParseTree {
+        +String ruleName
+        +List~ParseTree~ children
+        +Token token
+    }
+
+    class ASTNode {
+        <<abstract>>
+        +PositionInFile position
     }
 
     %% === Util ===
@@ -170,7 +239,7 @@ classDiagram
         +Path logFile
     }
 
-    %% === Beziehungen ===
+    %% === Relationships ===
     CompilationApp --> ArgumentParser : uses
     ArgumentParser --> CompilationOptions : sets
     CompilationApp --> CompilationEngine : calls run()
@@ -183,13 +252,32 @@ classDiagram
 
     Compiler --> Preprocessor : uses
     Compiler --> CompilerLogger : uses
+    Compiler --> Parser : uses
+    Compiler --> Lexer : uses
+    Compiler --> TokenStream : builds
+    Compiler --> ParseTree : receives
+    Compiler --> ASTNode : converts to
     Compiler --> CompilationOptions : reads
+    Compiler --> CompilerException : throws
 
+    Preprocessor --> CompilerException : throws
+
+    Lexer --> Token : creates
+    Lexer --> LexicalException : throws
+    Lexer --> CompilerException : throws
+    Parser --> TokenStream : consumes
+    Parser --> CompilerLogger : logs errors
+    Parser --> ParseTree : returns
+    Parser --> ParseException : throws
+    Token --> TokenType
+    Token --> PositionInFile
+    Token --> CompilationOptions : uses file path
+    TokenStream --> Token : manages
+    ASTNode --> PositionInFile
     CompilerLogger --> CompilationOptions : uses logFile
     CompilerLogger --> PositionInFile : uses
     CliLogger --> CompilationOptions : uses logFile
     Preprocessor --> CompilationOptions : reads
-
 ```
 
 </details>
