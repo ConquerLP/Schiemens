@@ -10,12 +10,21 @@ import java.util.stream.Collectors;
 
 public class CompileOptions {
 
+    private static final CompileOptions INSTANCE = new CompileOptions();
+
     private static boolean ast = false;
     private static boolean log = false;
     private static boolean time = false;
     private static boolean verify = false;
     private static String target = "sm";
     private static final Set<File> inputFiles = new LinkedHashSet<>();
+
+    private CompileOptions() {
+    }
+
+    public static CompileOptions getInstance() {
+        return INSTANCE;
+    }
 
     public static void parseArguments(Map<String, String> options) {
         ast = options.containsKey("-ast");
@@ -46,7 +55,7 @@ public class CompileOptions {
         }
     }
 
-    private List<File> resolvePattern(String pattern) {
+    private static List<File> resolvePattern(String pattern) {
         try {
             Path baseDir = Paths.get(".").toAbsolutePath().normalize();
             if (!pattern.contains("*") && !pattern.contains("?")) {
@@ -77,7 +86,7 @@ public class CompileOptions {
         }
     }
 
-    private String patternToRegex(String glob) {
+    private static String patternToRegex(String glob) {
         return "^" + glob
                 .replace(".", "\\.")
                 .replace("**", "§§")
@@ -87,11 +96,28 @@ public class CompileOptions {
                 + "$";
     }
 
-    public boolean isAst() { return ast; }
-    public boolean isLog() { return log; }
-    public boolean isTime() { return time; }
-    public boolean isVerify() { return verify; }
-    public String getTarget() { return target; }
-    public List<File> getInputFiles() { return new ArrayList<>(inputFiles); }
-    
+    public static boolean isAst() {
+        return ast;
+    }
+
+    public static boolean isLog() {
+        return log;
+    }
+
+    public static boolean isTime() {
+        return time;
+    }
+
+    public static boolean isVerify() {
+        return verify;
+    }
+
+    public static String getTarget() {
+        return target;
+    }
+
+    public static List<File> getInputFiles() {
+        return new ArrayList<>(inputFiles);
+    }
+
 }
