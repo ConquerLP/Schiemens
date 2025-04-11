@@ -10,22 +10,14 @@ import java.util.stream.Collectors;
 
 public class CompileOptions {
 
-    private static final CompileOptions INSTANCE = new CompileOptions();
+    private static boolean ast = false;
+    private static boolean log = false;
+    private static boolean time = false;
+    private static boolean verify = false;
+    private static String target = "sm";
+    private static final Set<File> inputFiles = new LinkedHashSet<>();
 
-    private boolean ast = false;
-    private boolean log = false;
-    private boolean time = false;
-    private boolean verify = false;
-    private String target = "sm";
-    private final Set<File> inputFiles = new LinkedHashSet<>();
-
-    private CompileOptions() {}
-
-    public static CompileOptions getInstance() {
-        return INSTANCE;
-    }
-
-    public void parseArguments(Map<String, String> options) {
+    public static void parseArguments(Map<String, String> options) {
         ast = options.containsKey("-ast");
         log = options.containsKey("-log");
         time = options.containsKey("-time");
@@ -43,14 +35,14 @@ public class CompileOptions {
                 for (String pattern : patterns) {
                     List<File> matches = resolvePattern(pattern);
                     if (matches.isEmpty()) {
-                        LoggerCli.getInstance().warn("No valid files found for: " + pattern);
+                        LoggerCli.warn("No valid files found for: " + pattern);
                     }
                     inputFiles.addAll(matches);
                 }
             }
         }
         if (inputFiles.isEmpty()) {
-            LoggerCli.getInstance().error("No valid .sc files.");
+            LoggerCli.error("No valid .sc files.");
         }
     }
 
@@ -80,7 +72,7 @@ public class CompileOptions {
                         .collect(Collectors.toList());
             }
         } catch (Exception e) {
-            LoggerCli.getInstance().error("Error whilst matching the pattern: " + pattern + " – " + e.getMessage());
+            LoggerCli.error("Error whilst matching the pattern: " + pattern + " – " + e.getMessage());
             return List.of();
         }
     }

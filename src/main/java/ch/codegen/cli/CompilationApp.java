@@ -22,7 +22,7 @@ public class CompilationApp {
             System.out.println("Version: " + VERSION);
             return;
         }
-        CompileOptions.getInstance().parseArguments(options);
+        CompileOptions.parseArguments(options);
 
 
 
