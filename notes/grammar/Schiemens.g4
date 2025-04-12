@@ -4,7 +4,7 @@ grammar Schiemens;
 program: (func | classDec | globalVar | label) EOF ;
 
 //function
-func: FUNC fHeader fParam functionBlock ;
+func: FUNC fHeader fParam block ;
 fHeader: returntype arrayGroup* identifier ;
 fParam: '(' argList? ')' ;
 varDescription: type constArray* identifier ;
@@ -16,43 +16,40 @@ classDec: CLASS identifier
 classInsideGroup: visibilty classInside+ ;
 classInside: classConstructor | classField | method ;
 visibilty: PUBLIC | PRIVATE ;
-classConstructor: visibilty identifier fParam functionBlock ;
-method: visibilty fHeader fParam functionBlock ;
+classConstructor: visibilty identifier fParam block ;
+method: visibilty fHeader fParam block ;
 classField: visibilty typemodifier? varDescription constInit? SEMI ;
 
 //programflow & statements
-functionBlock: '{' functionBlockStmt* '}' ;
-functionBlockStmt: stmt | (functionJumpStmt SEMI) ;
-loopBlock: '{' loopBlockStmt*  '}' ;
-loopBlockStmt: stmt | (loopJumpStmt SEMI) ;
+block: '{' stmt* '}' ;
 stmt: ifStmt
-	| whileStmt
-	| doWhileStmt SEMI
-	| forStmt
-	| switchCase
-	| label
-	| functionBlock
-	| varDec SEMI
-	| expression SEMI
-	| incDecStmt SEMI
-	;
-ifStmt: IF check functionBlock (ELSE functionBlock)? ;
-whileStmt: WHILE check loopBlock ;
-doWhileStmt: DO loopBlock WHILE check ;
-forStmt: FOR '(' forStart SEMI forCheck SEMI forAction ')' loopBlock ;
+    | whileStmt
+    | doWhileStmt
+    | forStmt
+    | switchCase
+    | label
+    | block
+    | varDec SEMI
+    | expression SEMI
+    | jumpStmt SEMI
+    | incDecStmt SEMI
+    ;
+ifStmt: IF check stmt (ELSE stmt)? ;
+whileStmt: WHILE check block ;
+doWhileStmt: DO block WHILE check ;
+forStmt: FOR '(' forStart SEMI forCheck SEMI forAction ')' block ;
 forStart: (varDec | orExpression)? ;
 forCheck: orExpression? ;
 forAction: orExpression? ;
-functionJumpStmt: GOTO identifier | RETURN expression? ;
-loopJumpStmt: BREAK
+jumpStmt: BREAK
 	| CONTINUE
 	| GOTO identifier
-	| RETURN expression?
+	| RETURN orExpression?
 	;
-label: LABEL identifier functionBlock ;
+label: LABEL identifier block ;
 switchCase: SWITCH check '{' caseBlock+ '}' ;
-caseBlock: CASE constant ':' functionBlock
-	| DEFAULT ':' functionBlock
+caseBlock: CASE constant ':' block
+	| DEFAULT ':' block
 	;
 check: '(' orExpression ')' ;
 

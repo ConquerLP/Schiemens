@@ -14,47 +14,90 @@ The project is a learning-oriented compiler, built from scratch to understand th
 
 ```text
 src/
-├── cli/                    → Command-line interface (UI layer)
-│   ├── CompilationApp.java        # Entry point (main)
-│   ├── ArgumentParser.java        # CLI argument parsing
-│   └── CliLogger.java             # CLI-specific logging
+├── cli/                          → Command-line interface (UI layer)
+│   ├── CompilationApp.java       # Entry point (main method)
+│   ├── ArgumentParser.java       # CLI argument parsing logic
+│   └── CliLogger.java            # CLI logging (stdout + file)
 
-├── core/                   → High-level orchestration and execution
-│   ├── CompilationEngine.java     # Entry point for the full pipeline
-│   ├── Compiler.java              # Compiles a single compilation unit
+├── core/                         → High-level orchestration of all phases
+│   ├── CompilationEngine.java    # Orchestrates the full pipeline
+│   └── Compiler.java             # Coordinates compilation of single units
 
-├── preprocessor/           → Preprocessing of source files
-│   └── Preprocessor.java          # Handles `#include` with once-only logic
+├── preprocessor/                 → Handles source expansion
+│   └── Preprocessor.java         # Expands `#include`, ensures no duplication
 
-├── lexer/                  → Lexical analysis
-│   ├── Lexer.java                 # Tokenizes the source code
-│   ├── Token.java                # Represents individual tokens
-│   ├── TokenType.java            # Enumerates token categories
-│   └── TokenStream.java          # Facilitates LL(1) token access
+├── lexer/                        → Lexical analysis
+│   ├── Lexer.java                # Implements scanner/tokenizer
+│   ├── Token.java                # Holds individual token data
+│   ├── TokenType.java            # Enum for token categories (keywords, literals...)
+│   ├── TokenStream.java          # Provides LL(1) access to token sequence
+│   └── LexicalPatterns.java      # Defines regex patterns per token type
 
-├── parser/                 → Syntax analysis
-│   ├── Parser.java                # LL(1) recursive descent parser
-│   ├── ParseTree.java            # Parse tree nodes (syntax-preserving)
+├── parser/                       → Syntax analysis
+│   ├── Parser.java               # Recursive descent parser for Schiemens grammar
+│   ├── ParseNode.java            # Raw parse tree node (formerly ParseTree)
+│   └── GrammarRule.java          # Enum for rule names in ParseNode
 
-├── ast/                    → Abstract syntax tree representation
-│   └── ASTNode.java              # Root type and its subclasses (to be extended)
+├── ast/                          → Abstract syntax tree (AST) structure
+│   ├── ASTNode.java              # Abstract base type for all AST nodes
+│   ├── StatementNode.java        # Base type for all statement nodes
+│   ├── ExpressionNode.java       # Base type for all expression nodes
+│   ├── ProgramNode.java          # Root node (holds top-level declarations)
+│   ├── FunctionNode.java         # Function declarations
+│   ├── ClassNode.java            # Class declarations
+│   ├── BlockNode.java            # Compound statement block
+│   ├── IfNode.java               # If/else statements
+│   ├── WhileNode.java            # While-loop
+│   ├── ForNode.java              # For-loop
+│   ├── ReturnNode.java           # Return statement
+│   ├── AssignmentNode.java       # Assignment expression
+│   ├── BinaryExpressionNode.java # Binary operations (with enum operator)
+│   ├── UnaryExpressionNode.java  # Unary operations
+│   ├── FunctionCallNode.java     # Function/method calls
+│   ├── NewObjectNode.java        # Object creation via `new`
+│   ├── FieldAccessNode.java      # Field access (e.g., `this.x`, `A.y`)
+│   ├── VariableAccessNode.java   # Variable access (e.g., `x`, `myVar`)
+│   ├── ArrayAccessNode.java      # Array access (e.g., `a[i]`)
+│   ├── ListLiteralNode.java      # Inline list literal (`{1,2,3}`)
+│   ├── ConstantNode.java         # Typed literal value (int, string, etc.)
+│   ├── BinaryOperator.java       # Enum for all binary ops (ADD, MUL, EQ, ...)
+│   ├── UnaryOperator.java        # Enum for unary ops (NEG, NOT, ...)
+│   ├── TypeNode.java             # Represents type and array depth
+│   └── ParameterNode.java        # Function or method parameter
 
-├── logging/                → Compiler-internal structured logging
-│   ├── CompilerLogger.java       # Logs errors and warnings per compilation unit
-│   └── CliLogger.java            # Shared with CLI (or move if strictly needed)
+├── visitor/                      → Visitors (tree traversal and transformation)
+│   ├── ASTBuilderVisitor.java    # Builds AST from ParseNode tree
+│   ├── ASTVisitor.java           # Interface for visiting AST nodes
+│   ├── TypeCheckerVisitor.java   # Performs semantic analysis (type, scope, etc.)
+│   └── CodeGenVisitor.java       # (planned) Emits intermediate / target code
 
-├── util/                   → Utility classes and shared options
-│   ├── CompilationOptions.java   # Static config parsed from CLI
-│   └── PositionInFile.java       # Tracks row/col within source files
+├── symbol/                       → Semantic analysis support (scopes, types, names)
+│   ├── Symbol.java               # Abstract symbol type with name + position
+│   ├── VariableSymbol.java       # Represents a declared variable
+│   ├── FunctionSymbol.java       # Represents a declared function/method
+│   ├── ClassSymbol.java          # Represents a declared class
+│   ├── Type.java                 # Runtime-resolved type (primitive/user-defined)
+│   ├── Scope.java                # Represents a single lexical scope
+│   ├── SymbolTable.java          # Stack of scopes (enter/exit/resolve/define)
+│   └── SemanticContext.java      # Contextual flags (e.g., current function, loop, class)
 
-├── grammar/                → Language grammar and documentation
-│   ├── Grammar.md                # Formal grammar definition
-│   └── Notes.txt                 # Drafts and grammar notes
+├── logging/                      → Logging system
+│   ├── CompilerLogger.java       # Logs per compilation unit with file/position info
+│   └── CliLogger.java            # Logs output at CLI level
 
-└── exception/              → Domain-specific exceptions
-    ├── CompilerException.java    # Fatal compiler-level errors
+├── util/                         → Shared tools and settings
+│   ├── CompilationOptions.java   # Holds parsed command-line config state
+│   └── PositionInFile.java       # Tracks line/column in source input
+
+├── grammar/                      → Language design artifacts
+│   ├── Grammar.md                # Current LL(1)-compatible grammar
+│   └── Notes.txt                 # Internal notes and planning docs
+
+└── exception/                    → Error and exception types
+    ├── CompilerException.java    # Generic fatal exception
     ├── LexicalException.java     # Thrown during lexing
     └── ParseException.java       # Thrown during parsing
+
 ```
 
 ---
@@ -213,11 +256,13 @@ java CompilationApp -i src/main.sc -o out/main.pain -target asm
 ```mermaid
 
 classDiagram
+
     %% === Helper ===
     class PositionInFile {
         +int row
         +int col
         +PositionInFile(int row, int col)
+        +void advance(char c)
         +String toString()
     }
 
@@ -320,17 +365,22 @@ classDiagram
         +Path sourceFile
     }
 
-    class TokenStream {
-        +Token peek()
-        +Token advance()
-        +boolean isAtEnd()
+    class Lexer {
+        +List~Token~ tokenize(Path sourceFile) throws LexicalException, CompilerException
+        -String sourceCode
+        -int currentIndex
+        -PositionInFile position
+        -Path file
         -List~Token~ tokens
-        -int position
     }
 
-    class Lexer {
-        <<static>>
-        +List~Token~ tokenize(Path sourceFile) throws LexicalException, CompilerException
+    class TokenStream {
+        +Token peek()
+        +Token peek(int offset)
+        +Token advance()
+        +boolean isAtEnd()
+        +boolean match(TokenType type)
+        +Token expect(TokenType type)
     }
 
     class Parser {
@@ -347,66 +397,325 @@ classDiagram
         +Token token
     }
 
+    %% === AST ===
     class ASTNode {
         <<abstract>>
         +PositionInFile position
     }
 
-    %% === Util ===
-    class CompilationOptions {
-        <<static>>
-        +List~Path~ inputFiles
-        +Path outputFile
-        +boolean compileSeparately
-        +boolean printAST
-        +boolean dumpLogs
-        +boolean printHelp
-        +boolean printVersion
-        +boolean printTime
-        +boolean verifyOnly
-        +String target
-        +Path logFile
+    class ProgramNode {
+        +List~FunctionNode~ functions
+        +List~ClassNode~ classes
+        +List~GlobalVarNode~ globals
+        +List~LabelNode~ labels
     }
 
-    %% === Relationships ===
-    CompilationApp --> ArgumentParser : uses
-    ArgumentParser --> CompilationOptions : sets
-    CompilationApp --> CompilationEngine : calls run()
-    CompilationApp --> CliLogger : uses
+    class FunctionNode {
+        +TypeNode returnType
+        +String name
+        +List~ParameterNode~ parameters
+        +BlockNode body
+    }
 
-    CompilationEngine --> CompilationOptions : reads
-    CompilationEngine --> Compiler : delegates to
-    CompilationEngine --> CompilerLogger : merges from many
-    CompilationEngine --> CliLogger : uses for summary
+    class ClassNode {
+        +String name
+        +List~MethodNode~ methods
+        +List~FieldNode~ fields
+        +List~ConstructorNode~ constructors
+    }
 
-    Compiler --> Preprocessor : uses
-    Compiler --> CompilerLogger : uses
-    Compiler --> Parser : uses
-    Compiler --> Lexer : uses
-    Compiler --> TokenStream : builds
-    Compiler --> ParseTree : receives
-    Compiler --> ASTNode : converts to
-    Compiler --> CompilationOptions : reads
-    Compiler --> CompilerException : throws
+    class GlobalVarNode {
+        +VarDeclarationNode declaration
+    }
 
-    Preprocessor --> CompilerException : throws
+    class VarDeclarationNode {
+        +TypeNode type
+        +String name
+        +boolean isFinal
+        +boolean isStatic
+        +ExpressionNode initializer
+    }
 
-    Lexer --> Token : creates
-    Lexer --> LexicalException : throws
-    Lexer --> CompilerException : throws
-    Parser --> TokenStream : consumes
-    Parser --> CompilerLogger : logs errors
-    Parser --> ParseTree : returns
-    Parser --> ParseException : throws
-    Token --> TokenType
-    Token --> PositionInFile
-    Token --> CompilationOptions : uses file path
-    TokenStream --> Token : manages
-    ASTNode --> PositionInFile
-    CompilerLogger --> CompilationOptions : uses logFile
-    CompilerLogger --> PositionInFile : uses
-    CliLogger --> CompilationOptions : uses logFile
-    Preprocessor --> CompilationOptions : reads
+    class ParameterNode {
+        +TypeNode type
+        +String name
+    }
+
+    class TypeNode {
+        +String name
+        +int arrayDepth
+    }
+
+    class StatementNode
+    class BlockNode {
+        +List~StatementNode~ statements
+    }
+
+    class IfNode {
+        +ExpressionNode condition
+        +StatementNode thenBranch
+        +StatementNode elseBranch
+    }
+
+    class WhileNode {
+        +ExpressionNode condition
+        +BlockNode body
+    }
+
+    class DoWhileNode {
+        +BlockNode body
+        +ExpressionNode condition
+    }
+
+    class ForNode {
+        +StatementNode initializer
+        +ExpressionNode condition
+        +ExpressionNode update
+        +BlockNode body
+    }
+
+    class SwitchNode {
+        +ExpressionNode condition
+        +List~CaseNode~ cases
+        +BlockNode defaultBlock
+    }
+
+    class CaseNode {
+        +ConstantNode value
+        +BlockNode body
+    }
+
+    class ReturnNode {
+        +ExpressionNode value
+    }
+
+    class BreakNode
+    class ContinueNode
+
+    class LabelNode {
+        +String name
+        +BlockNode body
+    }
+
+    class ExpressionNode
+
+    class AssignmentNode {
+        +ExpressionNode target
+        +String operator
+        +ExpressionNode value
+    }
+
+    class BinaryExpressionNode {
+        +BinaryOperator operator
+        +ExpressionNode left
+        +ExpressionNode right
+    }
+
+    class UnaryExpressionNode {
+        +UnaryOperator operator
+        +ExpressionNode operand
+    }
+
+    class VariableAccessNode {
+        +String name
+    }
+
+    class FieldAccessNode {
+        +ExpressionNode target
+        +String fieldName
+    }
+
+    class ArrayAccessNode {
+        +ExpressionNode array
+        +ExpressionNode index
+    }
+
+    class FunctionCallNode {
+        +ExpressionNode callee
+        +List~ExpressionNode~ arguments
+    }
+
+    class NewObjectNode {
+        +String className
+        +List~ExpressionNode~ arguments
+    }
+
+    class ThisNode
+    class ListLiteralNode {
+        +List~ExpressionNode~ values
+    }
+
+    class ConstantNode {
+        +Object value
+        +ConstantType type
+    }
+
+    class ConstantType {
+        <<enum>>
+        +INT
+        +DOUBLE
+        +STRING
+        +CHAR
+        +BOOLEAN
+        +NULL
+        +HEX
+        +OCT
+        +BIN
+    }
+
+    class BinaryOperator {
+        <<enum>>
+        +ADD, SUB, MUL, DIV, MOD, POW
+        +EQ, NEQ, LT, LTE, GT, GTE
+        +AND, OR
+        +BIT_AND, BIT_OR, BIT_XOR
+        +SHL, SHR
+    }
+
+    class UnaryOperator {
+        <<enum>>
+        +NEG, NOT, PRE_INC, PRE_DEC, POST_INC, POST_DEC
+    }
+
+    %% === Symbol System ===
+    class Symbol {
+        +String name
+        +PositionInFile position
+    }
+
+    class VariableSymbol {
+        +Type type
+        +boolean isFinal
+        +boolean isGlobal
+    }
+
+    class FunctionSymbol {
+        +Type returnType
+        +List~Type~ parameterTypes
+    }
+
+    class ClassSymbol {
+        +Map~String, Symbol~ members
+    }
+
+    class Type {
+        +String name
+        +int arrayDepth
+        +boolean isBuiltin
+    }
+
+    class Scope {
+        +Map~String, Symbol~ symbols
+        +Scope parent
+        +Symbol resolve(String name)
+        +void define(Symbol s)
+    }
+
+    class SymbolTable {
+        +void enterScope()
+        +void exitScope()
+        +void define(Symbol)
+        +Symbol resolve(String name)
+        -Deque~Scope~ scopeStack
+    }
+
+    class SemanticContext {
+        +boolean insideLoop
+        +FunctionSymbol currentFunction
+        +ClassSymbol currentClass
+    }
+
+%% === Beziehungen zu CLI, Compiler, Parser, Lexer ===
+
+CompilationApp --> ArgumentParser : uses
+ArgumentParser --> CompilationOptions : sets
+CompilationApp --> CompilationEngine : calls run()
+CompilationApp --> CliLogger : uses
+
+CompilationEngine --> CompilationOptions : reads
+CompilationEngine --> Compiler : delegates to
+CompilationEngine --> CompilerLogger : merges from many
+CompilationEngine --> CliLogger : uses for summary
+
+Compiler --> Preprocessor : uses
+Compiler --> CompilerLogger : uses
+Compiler --> Parser : uses
+Compiler --> Lexer : uses
+Compiler --> TokenStream : builds
+Compiler --> ParseTree : receives
+Compiler --> ASTNode : converts to
+Compiler --> CompilationOptions : reads
+Compiler --> CompilerException : throws
+
+Preprocessor --> CompilerException : throws
+Preprocessor --> CompilationOptions : reads
+
+Lexer --> Token : creates
+Lexer --> LexicalException : throws
+Lexer --> CompilerException : throws
+Lexer --> PositionInFile : updates
+
+TokenStream --> Token : manages
+
+Token --> TokenType
+Token --> PositionInFile
+Token --> CompilationOptions : uses file path
+
+Parser --> TokenStream : consumes
+Parser --> CompilerLogger : logs errors
+Parser --> ParseTree : returns
+Parser --> ParseException : throws
+
+ASTNode --> PositionInFile
+ParseTree --> Token
+CompilerLogger --> CompilationOptions : uses logFile
+CompilerLogger --> PositionInFile : uses
+CliLogger --> CompilationOptions : uses logFile
+    ASTNode <|-- ProgramNode
+    ASTNode <|-- FunctionNode
+    ASTNode <|-- ClassNode
+    ASTNode <|-- GlobalVarNode
+    ASTNode <|-- VarDeclarationNode
+    ASTNode <|-- ParameterNode
+    ASTNode <|-- TypeNode
+    ASTNode <|-- StatementNode
+    ASTNode <|-- ExpressionNode
+    ASTNode <|-- CaseNode
+    ASTNode <|-- ConstantNode
+    ASTNode <|-- LabelNode
+
+    StatementNode <|-- BlockNode
+    StatementNode <|-- IfNode
+    StatementNode <|-- WhileNode
+    StatementNode <|-- DoWhileNode
+    StatementNode <|-- ForNode
+    StatementNode <|-- SwitchNode
+    StatementNode <|-- ReturnNode
+    StatementNode <|-- BreakNode
+    StatementNode <|-- ContinueNode
+    StatementNode <|-- VarDeclarationNode
+    StatementNode <|-- LabelNode
+
+    ExpressionNode <|-- AssignmentNode
+    ExpressionNode <|-- BinaryExpressionNode
+    ExpressionNode <|-- UnaryExpressionNode
+    ExpressionNode <|-- VariableAccessNode
+    ExpressionNode <|-- FieldAccessNode
+    ExpressionNode <|-- ArrayAccessNode
+    ExpressionNode <|-- FunctionCallNode
+    ExpressionNode <|-- NewObjectNode
+    ExpressionNode <|-- ThisNode
+    ExpressionNode <|-- ListLiteralNode
+    ExpressionNode <|-- ConstantNode
+
+    Symbol <|-- VariableSymbol
+    Symbol <|-- FunctionSymbol
+    Symbol <|-- ClassSymbol
+
+    SymbolTable --> Scope : manages
+    Scope --> Symbol : defines
+    Scope --> Scope : parent
+
 ```
 </details>
 
