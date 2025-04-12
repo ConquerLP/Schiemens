@@ -5,7 +5,7 @@ A fully custom-built compiler in Java, including all major phases: CLI processin
 This compiler is designed to support LL(1) recursive descent parsing, file-based memory efficiency, robust logging with phase control, and extensible architecture for future phases such as semantic analysis and optimization.
 
 The name "Schiemens" is a playful nod to the famous enterprise "Siemens", but this project is not affiliated with them in any way.  
-I just hate Siemens products – they are overused and overpriced. Especially TIA-Portal and WinCC.  
+I just hate Siemens products – they are overused, overpriced and just garbage. Especially TIA-Portal (+SCL-Programming language and Compiler) and WinCC.  
 The project is a learning-oriented compiler, built from scratch to understand the intricacies of compiler design and implementation.
 
 ---
@@ -91,7 +91,32 @@ src/
 │   ├── ASTBuilderVisitor.java    # Builds AST from ParseNode tree
 │   ├── ASTVisitor.java           # Interface for visiting AST nodes
 │   ├── TypeCheckerVisitor.java   # Performs semantic analysis (type, scope, etc.)
-│   └── CodeGenVisitor.java       # (planned) Emits intermediate / target code
+│   └── IRGeneratorVisitor.java   # Builds IR from typed AST
+
+├── ir/                           → Intermediate Representation (SSA-style or 3-address)
+│   ├── IRInstruction.java        # Abstract base class
+│   ├── IRBinaryOp.java           # Binary instruction (e.g., ADD t1 t2 → t3)
+│   ├── IRLabel.java              # Labels for jumps/branches
+│   ├── IRJump.java               # Unconditional and conditional jumps
+│   ├── IRFunction.java           # Function container (name, params, body)
+│   ├── IRValue.java              # Base for variables, constants, etc.
+│   └── IRProgram.java            # Full IR program (all functions)
+
+├── bytecode/                     → Custom VM bytecode representation & generator
+│   ├── BytecodeInstruction.java  # Base class for bytecode instruction
+│   ├── BytecodeGenerator.java    # Converts IR to bytecode
+│   ├── BytecodeEmitter.java      # Writes encoded bytecode to .pain file
+│   └── Opcode.java               # Enum for supported VM operations
+
+├── vm/                           → Virtual machine interpreter
+│   ├── VirtualMachine.java       # Interpreter for Schiemens bytecode
+│   ├── VMStack.java              # Runtime call stack
+│   ├── VMHeap.java               # Heap memory (arrays, objects)
+│   └── VMClassLoader.java        # Loads and initializes classes from .pain
+
+├── jvm/                          → JVM Backend (optional)
+│   ├── JasminEmitter.java        # Emits Jasmin assembly (.j file)
+│   └── JasminTemplate.java       # Utility for common instruction patterns
 
 ├── symbol/                       → Semantic analysis support (scopes, types, names)
 │   ├── Symbol.java               # Abstract symbol type with name + position
@@ -119,7 +144,9 @@ src/
     ├── CompilerException.java    # Generic fatal exception
     ├── LexicalException.java     # Thrown during lexing
     └── ParseException.java       # Thrown during parsing
-
+    ├── LexicalException.java     # Thrown during lexing
+    └── ParseException.java       # Thrown during parsing
+    
 ```
 
 ---
@@ -161,45 +188,72 @@ It also separates **left-hand side expressions** (`lh_expression`) from general 
 ### ✍️ Selected Grammar Excerpt
 
 ```antlr
-expression: lh_expression assignOP orExpression | list ;
+//static declarations
+globalVar: GLOBAL typemodifier? varDescription constInit SEMI ;
+
+//expressions
 lh_expression: base_lh postfix_lh* ;
 base_lh: identifier | THIS ;
-postfix_lh: '.' identifier | arrayAccess ;
-
-primary: base_primary postfix_expression* ;
-base_primary: '(' orExpression ')'
-            | NEW identifier fArgs
-            | identifier
-            | THIS
-            | constant ;
-
-postfix_expression: '.' identifier fArgs
-                  | '.' identifier
-                  | arrayAccess ;
+postfix_lh: '.' identifier
+    | arrayAccess
+    ;
+expression: lh_expression assignOP orExpression | list ;
+orExpression: andExpression orTail ;
+orTail: (orOP andExpression)* ;
+andExpression: equalityExpression andTail ;
+andTail: (andOP equalityExpression)* ;
+equalityExpression: relationalExpression equalityTail ;
+equalityTail: (eqOP relationalExpression)* ;
+relationalExpression: additiveExpression relationTail ;
+relationTail: (relOP additiveExpression)* ;
+additiveExpression: multiplicativeExpression additiveTail ;
+additiveTail: (addOP multiplicativeExpression)* ;
+multiplicativeExpression: exponentiationExpression multiplicativeTail ;
+multiplicativeTail: (multOP exponentiationExpression)* ;
+exponentiationExpression: unaryExpression exponentiationTail ;
+exponentiationTail: (expOP unaryExpression)* ;
 
 unaryExpression: preOP postExpression | postExpression ;
 postExpression: primary ;
-
-incDecStmt: validPostfix_expression postOP ;
 validPostfix_expression: identifier
-                       | THIS
-                       | identifier postfix_lh+
-                       | THIS postfix_lh+ ;
+    | THIS
+    | identifier postfix_lh+
+    | THIS postfix_lh+
+    ;
 
-fArgs: '(' expressionMany? ')' ;
+primary: base_primary postfix_expression* ;
+base_primary: '(' orExpression ')'
+    | NEW identifier fArgs
+    | identifier
+    | THIS
+    | constant
+    ;
+postfix_expression: '.' identifier fArgs
+    | '.' identifier
+    | arrayAccess
+    ;
+incDecStmt: validPostfix_expression postOP ;
+list: '{' expressionMany '}'
+    | '{' subList (',' subList)+ '}' ;
+subList: '{' expressionMany '}' ;
 expressionMany: orExpression (',' orExpression)* ;
+fArgs: '(' expressionMany? ')' ;
 arrayAccess: '[' orExpression ']' ;
 
-assignOP: '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=' | '**=' ;
-orOP: '||' | 'or' ;
-andOP: '&&' | 'and' ;
-eqOP: '==' | '!=' ;
-relOP: '<' | '<=' | '>' | '>=' ;
-addOP: '+' | '-' ;
-multOP: '*' | '/' | '%' ;
-expOP: '^' | '**' ;
-preOP: '!' | 'not' | '-' | '+' ;
-postOP: '++' | '--' ;
+//const & type
+returntype: VOID | type ;
+
+constList: '{' constantMany '}'
+    | '{' constSubList (',' constSubList)+ '}' ;
+constSubList: '{' constantMany '}' ;
+constInit: constList | constant ;
+constantMany: constant (',' constant)* ;
+constArray: '[' constant ']';
+
+constant: doubleRule | intRule | stringRule | charRule | booleanRule | refRule | octRule | hexRule | binaryRule ;
+type: 'double' | 'int' | 'string' | 'char' | 'boolean' | identifier	;
+identifier: ID ;
+typemodifier: FINAL | STATIC ;
 ```
 
 This structure allows clear differentiation between valid assignable expressions and computed expressions.  
@@ -270,6 +324,14 @@ java CompilationApp -i src/main.sc -o out/main.pain -target asm
 - The compiler architecture is **fully modular**, enabling isolated testing and substitution of any phase
 
 ---
+## 🧠 Architecture Notes
+
+- Only Tokens, AST and tree structures are kept in memory
+- Source files, logs are file-based
+- Temporary files are deleted unless `-log` or `-ast` is active
+- Errors from lexer/parser/AST are printed to the console (first 20) and logged
+
+---
 
 ### 🔄 Full Compilation Pipeline (Overview)
 
@@ -309,10 +371,22 @@ The Schiemens compiler processes source code in the following pipeline:
         - Return consistency checks
         - Context-sensitive checks (e.g. `break` only inside loops)
 
-7. **(Planned) Code Generation**
-    - Target: either custom bytecode or x86-style assembly
-    - Translates AST to low-level instructions
-    - Emits `.asm`, `.pain`, or another IR format
+7. **Intermediate Representation (IR) Generation**
+    - Converts AST into a simple **stack-based intermediate representation**
+    - IR instructions are independent of output format
+    - Facilitates optimizations and multiple backends
+
+8. **Bytecode Generation**
+    - Converts IR into final **custom bytecode**
+    - Encodes operations, constants, and program layout
+    - Target output is `.pain` bytecode format, designed for execution on a VM
+
+9. **Execution (optional, via VM)**
+    - The generated bytecode can be executed using a custom-built **Schiemens Virtual Machine (VM)**
+    - The VM manages:
+        - Operand stack, call stack, heap memory
+        - Dynamic object creation and method dispatch
+        - Instruction decoding and program control flow
 
 ---
 
@@ -484,257 +558,77 @@ classDiagram
         +Token token
     }
 
-    %% === AST ===
-    class ASTNode {
-        <<abstract>>
+    %% === IR ===
+    class IRInstruction {
         +PositionInFile position
     }
 
-    class ProgramNode {
-        +List~FunctionNode~ functions
-        +List~ClassNode~ classes
-        +List~GlobalVarNode~ globals
-        +List~LabelNode~ labels
-    }
-
-    class FunctionNode {
-        +TypeNode returnType
-        +String name
-        +List~ParameterNode~ parameters
-        +BlockNode body
-    }
-
-    class ClassNode {
-        +String name
-        +List~MethodNode~ methods
-        +List~FieldNode~ fields
-        +List~ConstructorNode~ constructors
-    }
-
-    class GlobalVarNode {
-        +VarDeclarationNode declaration
-    }
-
-    class VarDeclarationNode {
-        +TypeNode type
-        +String name
-        +boolean isFinal
-        +boolean isStatic
-        +ExpressionNode initializer
-    }
-
-    class ParameterNode {
-        +TypeNode type
+    class IRLabel {
         +String name
     }
 
-    class TypeNode {
-        +String name
-        +int arrayDepth
+    class IRJump {
+        +String label
     }
 
-    class StatementNode
-    class BlockNode {
-        +List~StatementNode~ statements
-    }
-
-    class IfNode {
-        +ExpressionNode condition
-        +StatementNode thenBranch
-        +StatementNode elseBranch
-    }
-
-    class WhileNode {
-        +ExpressionNode condition
-        +BlockNode body
-    }
-
-    class DoWhileNode {
-        +BlockNode body
-        +ExpressionNode condition
-    }
-
-    class ForNode {
-        +StatementNode initializer
-        +ExpressionNode condition
-        +ExpressionNode update
-        +BlockNode body
-    }
-
-    class SwitchNode {
-        +ExpressionNode condition
-        +List~CaseNode~ cases
-        +BlockNode defaultBlock
-    }
-
-    class CaseNode {
-        +ConstantNode value
-        +BlockNode body
-    }
-
-    class ReturnNode {
-        +ExpressionNode value
-    }
-
-    class BreakNode
-    class ContinueNode
-
-    class LabelNode {
-        +String name
-        +BlockNode body
-    }
-
-    class ExpressionNode
-
-    class AssignmentNode {
-        +ExpressionNode target
+    class IRConditionalJump {
         +String operator
-        +ExpressionNode value
+        +IRValue left
+        +IRValue right
+        +String targetLabel
     }
 
-    class BinaryExpressionNode {
-        +BinaryOperator operator
-        +ExpressionNode left
-        +ExpressionNode right
+    class IRBinaryOp {
+        +String op
+        +IRValue left
+        +IRValue right
+        +String result
     }
 
-    class UnaryExpressionNode {
-        +UnaryOperator operator
-        +ExpressionNode operand
+    class IRCall {
+        +String functionName
+        +List~IRValue~ arguments
+        +String result
     }
 
-    class VariableAccessNode {
-        +String name
+    class IRReturn {
+        +IRValue value
     }
 
-    class FieldAccessNode {
-        +ExpressionNode target
-        +String fieldName
-    }
+    class IRValue
 
-    class ArrayAccessNode {
-        +ExpressionNode array
-        +ExpressionNode index
-    }
-
-    class FunctionCallNode {
-        +ExpressionNode callee
-        +List~ExpressionNode~ arguments
-    }
-
-    class NewObjectNode {
-        +String className
-        +List~ExpressionNode~ arguments
-    }
-
-    class ThisNode
-    class ListLiteralNode {
-        +List~ExpressionNode~ values
-    }
-
-    class ConstantNode {
+    class IRConst {
         +Object value
-        +ConstantType type
     }
 
-    class ConstantType {
-        <<enum>>
-        +INT
-        +DOUBLE
-        +STRING
-        +CHAR
-        +BOOLEAN
-        +NULL
-        +HEX
-        +OCT
-        +BIN
-    }
-
-    class BinaryOperator {
-        <<enum>>
-        +ADD, SUB, MUL, DIV, MOD, POW
-        +EQ, NEQ, LT, LTE, GT, GTE
-        +AND, OR
-        +BIT_AND, BIT_OR, BIT_XOR
-        +SHL, SHR
-    }
-
-    class UnaryOperator {
-        <<enum>>
-        +NEG, NOT, PRE_INC, PRE_DEC, POST_INC, POST_DEC
-    }
-
-    %% === Symbol System ===
-    class Symbol {
+    class IRTemp {
         +String name
-        +PositionInFile position
     }
 
-    class VariableSymbol {
-        +Type type
-        +boolean isFinal
-        +boolean isGlobal
-    }
-
-    class FunctionSymbol {
-        +Type returnType
-        +List~Type~ parameterTypes
-    }
-
-    class ClassSymbol {
-        +Map~String, Symbol~ members
-    }
-
-    class Type {
+    class IRVariable {
         +String name
-        +int arrayDepth
-        +boolean isBuiltin
     }
 
-    class Scope {
-        +Map~String, Symbol~ symbols
-        +Scope parent
-        +Symbol resolve(String name)
-        +void define(Symbol s)
+    class IRBuilderVisitor {
+        +List~IRInstruction~ instructions
+        +Map~ASTNode, String~ valueMap
     }
 
-    class SymbolTable {
-        +void enterScope()
-        +void exitScope()
-        +void define(Symbol)
-        +Symbol resolve(String name)
-        -Deque~Scope~ scopeStack
+    class IRProgram {
+        +List~IRInstruction~ instructions
     }
 
-    class SemanticContext {
-        +boolean insideLoop
-        +FunctionSymbol currentFunction
-        +ClassSymbol currentClass
-    }
-    
-    %% === Semantischer Visitor ===
-    class ASTVisitor {
-        <<interface>>
-        +visit(ASTNode node)
+    %% === Codegen ===
+    class CodeGenerator {
+        +void emit(List~IRInstruction~ ir)
     }
 
-    class TypeCheckerVisitor {
-        +visit(FunctionNode)
-        +visit(AssignmentNode)
-        +visit(ReturnNode)
-        +visit(IfNode)
-        +visit(BlockNode)
-        +Type evaluate(ExpressionNode)
-        +boolean isAssignable(Type target, Type source)
-        -SymbolTable symbolTable
-        -SemanticContext context
-        -CompilerLogger logger
+    class X86CodeGenerator {
+        +void emit(List~IRInstruction~ ir)
     }
 
-    class SemanticContext {
-        +boolean insideLoop
-        +FunctionSymbol currentFunction
-        +ClassSymbol currentClass
+    class BytecodeGenerator {
+        +void emit(List~IRInstruction~ ir)
     }
 
     %% === Beziehungen zu CLI, Compiler, Parser, Lexer ===
@@ -834,6 +728,30 @@ classDiagram
     TypeCheckerVisitor --> ASTNode
 
     ASTVisitor <|.. TypeCheckerVisitor
+    
+    CodeGenerator <|.. X86CodeGenerator
+    CodeGenerator <|.. BytecodeGenerator
+
+    IRInstruction <|-- IRLabel
+    IRInstruction <|-- IRJump
+    IRInstruction <|-- IRConditionalJump
+    IRInstruction <|-- IRBinaryOp
+    IRInstruction <|-- IRCall
+    IRInstruction <|-- IRReturn
+
+    IRValue <|-- IRConst
+    IRValue <|-- IRTemp
+    IRValue <|-- IRVariable
+
+    IRBuilderVisitor --> IRInstruction
+    IRBuilderVisitor --> IRProgram
+    IRBuilderVisitor --> ASTNode
+
+    X86CodeGenerator --> IRInstruction
+    BytecodeGenerator --> IRInstruction
+
+    Compiler --> IRBuilderVisitor
+    Compiler --> IRProgram
 
 ```
 </details>
