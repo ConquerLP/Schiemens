@@ -10,6 +10,28 @@ The project is a learning-oriented compiler, built from scratch to understand th
 
 ---
 
+# ✅ Compiler Development Task Checklist
+
+This file tracks progress across all phases of compiler implementation.
+
+| Task                          | Coded   | Shallow Tested   | Fully Tested   | Last Update   |
+|:------------------------------|:--------|:-----------------|:---------------|:--------------|
+| Planning                      | ✅      | ❌               | ❌             | 2025-04-12    |
+| Architecture Design           | ❌      | ❌               | ❌             | -             |
+| Command-Line Interface (CLI)  | ❌      | ❌               | ❌             | -             |
+| Preprocessor                  | ❌      | ❌               | ❌             | -             |
+| Lexer                         | ❌      | ❌               | ❌             | -             |
+| Parser                        | ❌      | ❌               | ❌             | -             |
+| Parse Tree (ParseNode)        | ❌      | ❌               | ❌             | -             |
+| AST Construction              | ❌      | ❌               | ❌             | -             |
+| AST Visitor                   | ❌      | ❌               | ❌             | -             |
+| Type Checker (Semantic Phase) | ❌      | ❌               | ❌             | -             |
+| Symbol Table                  | ❌      | ❌               | ❌             | -             |
+| Code Generation               | ❌      | ❌               | ❌             | -             |
+| Error Handling & Logging      | ❌      | ❌               | ❌             | -             |
+| Testing (Unit & Integration)  | ❌      | ❌               | ❌             | -             |
+| Documentation                 | ❌      | ❌               | ❌             | -             |
+
 ## 📦 Modular Package Structure
 
 ```text
@@ -241,12 +263,77 @@ java CompilationApp -i src/main.sc -o out/main.pain -target asm
 
 ## 🧠 Architecture Notes
 
-- Only Tokens, AST and tree structures are kept in memory
-- Source files, logs are file-based
-- Temporary files are deleted unless `-log` or `-ast` is active
-- Errors from lexer/parser/AST are printed to the console (first 20) and logged
+- Only **tokens**, **parse trees**, and **AST nodes** are kept in memory during compilation
+- **Source files** and **logs** are file-backed for performance and memory efficiency
+- Temporary files are cleaned up unless `-log` or `-ast` flags are enabled
+- Errors from all phases (lexer, parser, semantic analysis) are reported in the terminal (first 20) and written to the log
+- The compiler architecture is **fully modular**, enabling isolated testing and substitution of any phase
 
 ---
+
+### 🔄 Full Compilation Pipeline (Overview)
+
+The Schiemens compiler processes source code in the following pipeline:
+
+1. **Command-Line Frontend (CLI)**
+    - Parses user arguments and flags
+    - Controls logging, input/output, AST dumping etc.
+
+2. **Preprocessing**
+    - Handles `#include` directives
+    - Expands file contents into one logical source
+    - Avoids cyclic or duplicate inclusion
+
+3. **Lexical Analysis (Lexer)**
+    - Converts the preprocessed file into a list of **tokens**
+    - Tracks token positions in file for precise error reporting
+    - Produces a `TokenStream` for LL(1) parsing
+
+4. **Syntax Analysis (Parser)**
+    - Parses the token stream using a **recursive descent parser**
+    - Produces a detailed **parse tree** (concrete syntax tree)
+    - Detects and logs syntax errors
+
+5. **AST Construction**
+    - The `ASTBuilderVisitor` walks the parse tree
+    - Produces a simplified, semantics-focused **AST**
+    - Removes grammar noise, captures user intent
+
+6. **Semantic Analysis**
+    - Handled by `TypeCheckerVisitor` (implements `ASTVisitor`)
+    - Manages `SymbolTable`, `Scope` stack, and `SemanticContext`
+    - Performs:
+        - Type inference and checking (incl. implicit conversions)
+        - Undeclared variable/function/class detection
+        - Scope resolution and shadowing detection
+        - Return consistency checks
+        - Context-sensitive checks (e.g. `break` only inside loops)
+
+7. **(Planned) Code Generation**
+    - Target: either custom bytecode or x86-style assembly
+    - Translates AST to low-level instructions
+    - Emits `.asm`, `.pain`, or another IR format
+
+---
+
+### 🧭 Visual Flowchart (High-level)
+
+```mermaid
+flowchart TD
+    A[Start / CLI Input] --> B[Preprocessor]
+    B --> C[Lexer: tokenize]
+    C --> D[TokenStream]
+    D --> E[Parser: Parse Tree]
+    E --> F[ASTBuilderVisitor]
+    F --> G[AST: Abstract Syntax Tree]
+    G --> H[TypeCheckerVisitor]
+    H --> I{Semantic Errors?}
+    I -- Yes --> J[Logger: Print + Abort]
+    I -- No --> K[Code Generator (planned)]
+    K --> L[Target Code Output]
+    J --> M[End]
+    L --> M
+```
 
 ## 📊 Class Diagram
 
@@ -624,53 +711,78 @@ classDiagram
         +FunctionSymbol currentFunction
         +ClassSymbol currentClass
     }
+    
+    %% === Semantischer Visitor ===
+    class ASTVisitor {
+        <<interface>>
+        +visit(ASTNode node)
+    }
 
-%% === Beziehungen zu CLI, Compiler, Parser, Lexer ===
+    class TypeCheckerVisitor {
+        +visit(FunctionNode)
+        +visit(AssignmentNode)
+        +visit(ReturnNode)
+        +visit(IfNode)
+        +visit(BlockNode)
+        +Type evaluate(ExpressionNode)
+        +boolean isAssignable(Type target, Type source)
+        -SymbolTable symbolTable
+        -SemanticContext context
+        -CompilerLogger logger
+    }
 
-CompilationApp --> ArgumentParser : uses
-ArgumentParser --> CompilationOptions : sets
-CompilationApp --> CompilationEngine : calls run()
-CompilationApp --> CliLogger : uses
+    class SemanticContext {
+        +boolean insideLoop
+        +FunctionSymbol currentFunction
+        +ClassSymbol currentClass
+    }
 
-CompilationEngine --> CompilationOptions : reads
-CompilationEngine --> Compiler : delegates to
-CompilationEngine --> CompilerLogger : merges from many
-CompilationEngine --> CliLogger : uses for summary
+    %% === Beziehungen zu CLI, Compiler, Parser, Lexer ===
+    
+    CompilationApp --> ArgumentParser : uses
+    ArgumentParser --> CompilationOptions : sets
+    CompilationApp --> CompilationEngine : calls run()
+    CompilationApp --> CliLogger : uses
+    
+    CompilationEngine --> CompilationOptions : reads
+    CompilationEngine --> Compiler : delegates to
+    CompilationEngine --> CompilerLogger : merges from many
+    CompilationEngine --> CliLogger : uses for summary
+    
+    Compiler --> Preprocessor : uses
+    Compiler --> CompilerLogger : uses
+    Compiler --> Parser : uses
+    Compiler --> Lexer : uses
+    Compiler --> TokenStream : builds
+    Compiler --> ParseTree : receives
+    Compiler --> ASTNode : converts to
+    Compiler --> CompilationOptions : reads
+    Compiler --> CompilerException : throws
+    
+    Preprocessor --> CompilerException : throws
+    Preprocessor --> CompilationOptions : reads
+    
+    Lexer --> Token : creates
+    Lexer --> LexicalException : throws
+    Lexer --> CompilerException : throws
+    Lexer --> PositionInFile : updates
+    
+    TokenStream --> Token : manages
+    
+    Token --> TokenType
+    Token --> PositionInFile
+    Token --> CompilationOptions : uses file path
 
-Compiler --> Preprocessor : uses
-Compiler --> CompilerLogger : uses
-Compiler --> Parser : uses
-Compiler --> Lexer : uses
-Compiler --> TokenStream : builds
-Compiler --> ParseTree : receives
-Compiler --> ASTNode : converts to
-Compiler --> CompilationOptions : reads
-Compiler --> CompilerException : throws
-
-Preprocessor --> CompilerException : throws
-Preprocessor --> CompilationOptions : reads
-
-Lexer --> Token : creates
-Lexer --> LexicalException : throws
-Lexer --> CompilerException : throws
-Lexer --> PositionInFile : updates
-
-TokenStream --> Token : manages
-
-Token --> TokenType
-Token --> PositionInFile
-Token --> CompilationOptions : uses file path
-
-Parser --> TokenStream : consumes
-Parser --> CompilerLogger : logs errors
-Parser --> ParseTree : returns
-Parser --> ParseException : throws
-
-ASTNode --> PositionInFile
-ParseTree --> Token
-CompilerLogger --> CompilationOptions : uses logFile
-CompilerLogger --> PositionInFile : uses
-CliLogger --> CompilationOptions : uses logFile
+    Parser --> TokenStream : consumes
+    Parser --> CompilerLogger : logs errors
+    Parser --> ParseTree : returns
+    Parser --> ParseException : throws
+    
+    ASTNode --> PositionInFile
+    ParseTree --> Token
+    CompilerLogger --> CompilationOptions : uses logFile
+    CompilerLogger --> PositionInFile : uses
+    CliLogger --> CompilationOptions : uses logFile
     ASTNode <|-- ProgramNode
     ASTNode <|-- FunctionNode
     ASTNode <|-- ClassNode
@@ -715,6 +827,13 @@ CliLogger --> CompilationOptions : uses logFile
     SymbolTable --> Scope : manages
     Scope --> Symbol : defines
     Scope --> Scope : parent
+        
+    TypeCheckerVisitor --> SymbolTable
+    TypeCheckerVisitor --> SemanticContext
+    TypeCheckerVisitor --> CompilerLogger
+    TypeCheckerVisitor --> ASTNode
+
+    ASTVisitor <|.. TypeCheckerVisitor
 
 ```
 </details>
