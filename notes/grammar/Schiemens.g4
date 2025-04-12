@@ -34,6 +34,7 @@ stmt: ifStmt
 	| functionBlock
 	| varDec SEMI
 	| expression SEMI
+	| incDecStmt SEMI
 	;
 ifStmt: IF check functionBlock (ELSE functionBlock)? ;
 whileStmt: WHILE check loopBlock ;
@@ -61,41 +62,54 @@ varDec: typemodifier? varDescription ('=' (orExpression | list))? ;
 //static declarations
 globalVar: GLOBAL typemodifier? varDescription constInit SEMI ;
 
-//expression
-arrayAccess: '[' expression ']' ;
-methodCall: '.' identifier fArgs arrayAccess* exprTail* ;
-newObject: NEW identifier fArgs arrayAccess* exprTail* ;
-fCall: identifier fArgs arrayAccess* exprTail* ;
+//expressions
+lh_expression: base_lh postfix_lh* ;
+base_lh: identifier | THIS ;
+postfix_lh: '.' identifier
+    | arrayAccess
+    ;
+expression: lh_expression assignOP orExpression | list ;
+orExpression: andExpression orTail ;
+orTail: (orOP andExpression)* ;
+andExpression: equalityExpression andTail ;
+andTail: (andOP equalityExpression)* ;
+equalityExpression: relationalExpression equalityTail ;
+equalityTail: (eqOP relationalExpression)* ;
+relationalExpression: additiveExpression relationTail ;
+relationTail: (relOP additiveExpression)* ;
+additiveExpression: multiplicativeExpression additiveTail ;
+additiveTail: (addOP multiplicativeExpression)* ;
+multiplicativeExpression: exponentiationExpression multiplicativeTail ;
+multiplicativeTail: (multOP exponentiationExpression)* ;
+exponentiationExpression: unaryExpression exponentiationTail ;
+exponentiationTail: (expOP unaryExpression)* ;
 
-thisAcces: THIS exprTail* ;
-varAcces: identifier arrayAccess* exprTail* ;
-exprTail: (('.' identifier) | methodCall) arrayAccess* ;
-lh_expression: thisAcces | varAcces ;
-
-expression: lh_expression assignOP (expression | list) | orExpression ;
-
-orExpression: orExpression orOP andExpression | andExpression ;
-andExpression: andExpression andOP equalityExpression | equalityExpression ;
-equalityExpression: equalityExpression eqOP relationalExpression | relationalExpression ;
-relationalExpression: relationalExpression relOP additiveExpression | additiveExpression ;
-additiveExpression: additiveExpression addOP multiplicativeExpression | multiplicativeExpression ;
-multiplicativeExpression: multiplicativeExpression multOP exponentiationExpression | exponentiationExpression ;
-exponentiationExpression: exponentiationExpression expOP unaryExpression | unaryExpression ;
-unaryExpression: preOP unaryExpression | postExpression ;
-postExpression: primary postOP | primary ;
-primary: '(' orExpression ')'
-    | newObject
-    | fCall
-    | varAcces
-    | thisAcces
-    | constant
+unaryExpression: preOP postExpression | postExpression ;
+postExpression: primary ;
+validPostfix_expression: identifier
+    | THIS
+    | identifier postfix_lh+
+    | THIS postfix_lh+
     ;
 
+primary: base_primary postfix_expression* ;
+base_primary: '(' orExpression ')'
+    | NEW identifier fArgs
+    | identifier
+    | THIS
+    | constant
+    ;
+postfix_expression: '.' identifier fArgs
+    | '.' identifier
+    | arrayAccess
+    ;
+incDecStmt: validPostfix_expression postOP ;
 list: '{' expressionMany '}'
     | '{' subList (',' subList)+ '}' ;
 subList: '{' expressionMany '}' ;
 expressionMany: orExpression (',' orExpression)* ;
 fArgs: '(' expressionMany? ')' ;
+arrayAccess: '[' orExpression ']' ;
 
 //const & type
 returntype: VOID | type ;

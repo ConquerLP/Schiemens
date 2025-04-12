@@ -4,8 +4,8 @@ A fully custom-built compiler in Java, including all major phases: CLI processin
 
 This compiler is designed to support LL(1) recursive descent parsing, file-based memory efficiency, robust logging with phase control, and extensible architecture for future phases such as semantic analysis and optimization.
 
-The name "Schiemens" is a playful nod to the famous enterprise "Siemens", but this project is not affiliated with them in any way.
-I just hate Siemens products they are overused and overpriced. Especially TIA-Portal and WinCC.
+The name "Schiemens" is a playful nod to the famous enterprise "Siemens", but this project is not affiliated with them in any way.  
+I just hate Siemens products – they are overused and overpriced. Especially TIA-Portal and WinCC.  
 The project is a learning-oriented compiler, built from scratch to understand the intricacies of compiler design and implementation.
 
 ---
@@ -58,6 +58,88 @@ src/
 ```
 
 ---
+
+## 📊 Language Grammar (LL(1)-based)
+
+The compiler uses a fully hand-written **LL(1) recursive descent parser**, and the grammar has been carefully designed to ensure:
+- no left-recursion,
+- predictable parse paths with single-token lookahead,
+- full compatibility with recursive descent parsing techniques.
+
+### 🧠 Expression hierarchy
+
+To support LL(1) parsing and clean operator precedence, expressions are organized as a **recursive tail hierarchy**:
+
+```
+orExpression
+  → andExpression
+    → equalityExpression
+      → relationalExpression
+        → additiveExpression
+          → multiplicativeExpression
+            → exponentiationExpression
+              → unaryExpression
+```
+
+Each layer introduces a corresponding tail rule like:
+
+```antlr
+additiveExpression: multiplicativeExpression additiveTail ;
+additiveTail: (addOP multiplicativeExpression)* ;
+```
+
+This avoids direct or indirect **left recursion**, enabling clean descent and AST construction.  
+It also separates **left-hand side expressions** (`lh_expression`) from general expressions, ensuring that assignments like `f() = 1` or `this.a()++` are *not* valid syntactically.
+
+---
+
+### ✍️ Selected Grammar Excerpt
+
+```antlr
+expression: lh_expression assignOP orExpression | list ;
+lh_expression: base_lh postfix_lh* ;
+base_lh: identifier | THIS ;
+postfix_lh: '.' identifier | arrayAccess ;
+
+primary: base_primary postfix_expression* ;
+base_primary: '(' orExpression ')'
+            | NEW identifier fArgs
+            | identifier
+            | THIS
+            | constant ;
+
+postfix_expression: '.' identifier fArgs
+                  | '.' identifier
+                  | arrayAccess ;
+
+unaryExpression: preOP postExpression | postExpression ;
+postExpression: primary ;
+
+incDecStmt: validPostfix_expression postOP ;
+validPostfix_expression: identifier
+                       | THIS
+                       | identifier postfix_lh+
+                       | THIS postfix_lh+ ;
+
+fArgs: '(' expressionMany? ')' ;
+expressionMany: orExpression (',' orExpression)* ;
+arrayAccess: '[' orExpression ']' ;
+
+assignOP: '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=' | '**=' ;
+orOP: '||' | 'or' ;
+andOP: '&&' | 'and' ;
+eqOP: '==' | '!=' ;
+relOP: '<' | '<=' | '>' | '>=' ;
+addOP: '+' | '-' ;
+multOP: '*' | '/' | '%' ;
+expOP: '^' | '**' ;
+preOP: '!' | 'not' | '-' | '+' ;
+postOP: '++' | '--' ;
+```
+
+This structure allows clear differentiation between valid assignable expressions and computed expressions.  
+Statements like `a = b + 1;`, `a.b[0]++;`, or `func(x);` are allowed, but invalid assignments like `f() = x;` or `this.a()++;` are rejected *already at parse time*.
+
 
 ## 🧪 CLI Usage
 
@@ -116,8 +198,8 @@ java CompilationApp -i src/main.sc -o out/main.pain -target asm
 
 ## 🧠 Architecture Notes
 
-- Only AST and tree structures are kept in memory
-- Source files, logs, and token streams are file-based
+- Only Tokens, AST and tree structures are kept in memory
+- Source files, logs are file-based
 - Temporary files are deleted unless `-log` or `-ast` is active
 - Errors from lexer/parser/AST are printed to the console (first 20) and logged
 
@@ -327,6 +409,9 @@ classDiagram
     Preprocessor --> CompilationOptions : reads
 ```
 </details>
+
+---
+
 ## 📍 License & Contributions
 
 > This project is a learning-oriented compiler built in Java. Feel free to fork, test, improve!
