@@ -1,12 +1,17 @@
 # 🔧 Java Compiler Project (Schiemens Compiler)
 
-A fully custom-built compiler in Java, including all major phases: CLI processing, preprocessing, lexing, parsing, parse tree construction, AST generation, logging, and target code output.
+A fully custom-built compiler in Java, including all major phases: CLI processing, preprocessing, lexing, parsing, parse tree construction, AST generation, IR generation, custom Bytecode generation, logging and virtual machine implementation.
 
-This compiler is designed to support LL(1) recursive descent parsing, file-based memory efficiency, robust logging with phase control, and extensible architecture for future phases such as semantic analysis and optimization.
-
-The name "Schiemens" is a playful nod to the famous enterprise "Siemens", but this project is not affiliated with them in any way.  
+The name "Schiemens" is a playful nod to the worldwide known german enterprise "Siemens", but this project is not affiliated with them in any way.  
 I just hate Siemens products – they are overused, overpriced and just garbage. Especially TIA-Portal (+SCL-Programming language and Compiler) and WinCC.  
 The project is a learning-oriented compiler, built from scratch to understand the intricacies of compiler design and implementation.
+The goal is to create a fully functional compiler that can compile and execute Schiemens code, a custom programming language designed for this project.
+
+The Schiemens language is a high-level, statically typed language with a syntax similar to Java and C/C++. It supports object-oriented programming and imperative programming paradigms. 
+The language is designed to be easy to read and write, with a focus on simplicity and clarity.
+The compiler is designed to be modular and extensible, allowing for easy addition of new features and optimizations in the future.
+The compiler is built using Java and follows a modular architecture, with each phase of the compilation process implemented as a separate module. 
+This allows for easy testing and debugging of each phase, as well as the ability to swap out or modify individual components without affecting the entire compiler.
 
 ---
 
@@ -14,23 +19,27 @@ The project is a learning-oriented compiler, built from scratch to understand th
 
 This file tracks progress across all phases of compiler implementation.
 
-| Task                          | Coded   | Shallow Tested   | Fully Tested   | Last Update   |
-|:------------------------------|:--------|:-----------------|:---------------|:--------------|
-| Planning                      | ✅      | ❌               | ❌             | 2025-04-12    |
-| Architecture Design           | ❌      | ❌               | ❌             | -             |
-| Command-Line Interface (CLI)  | ❌      | ❌               | ❌             | -             |
-| Preprocessor                  | ❌      | ❌               | ❌             | -             |
-| Lexer                         | ❌      | ❌               | ❌             | -             |
-| Parser                        | ❌      | ❌               | ❌             | -             |
-| Parse Tree (ParseNode)        | ❌      | ❌               | ❌             | -             |
-| AST Construction              | ❌      | ❌               | ❌             | -             |
-| AST Visitor                   | ❌      | ❌               | ❌             | -             |
-| Type Checker (Semantic Phase) | ❌      | ❌               | ❌             | -             |
-| Symbol Table                  | ❌      | ❌               | ❌             | -             |
-| Code Generation               | ❌      | ❌               | ❌             | -             |
-| Error Handling & Logging      | ❌      | ❌               | ❌             | -             |
-| Testing (Unit & Integration)  | ❌      | ❌               | ❌             | -             |
-| Documentation                 | ❌      | ❌               | ❌             | -             |
+| Task                             | Coded | Shallow Tested | Fully Tested | Last Update | Comment                            |
+|:---------------------------------|:------|:---------------|:-------------|:------------|:-----------------------------------|
+| Planning                         | ✅     | *(none)*       | *(none)*     | 2025-04-12  |                                    |
+| Architecture Design              | ✅     | *(none)*       | *(none)*     | 2025-04-12  | will probably change in the future |
+| Command-Line Interface (CLI)     | ❌     | ❌              | ❌            | -           |                                    |
+| Preprocessor                     | ❌     | ❌              | ❌            | -           |                                    |
+| Lexer                            | ❌     | ❌              | ❌            | -           |                                    |
+| Parser                           | ❌     | ❌              | ❌            | -           |                                    |
+| Parse Tree (ParseNode)           | ❌     | ❌              | ❌            | -           |                                    |
+| AST Construction                 | ❌     | ❌              | ❌            | -           |                                    |
+| AST Visitor                      | ❌     | ❌              | ❌            | -           |                                    |
+| Type Checker (Semantic Phase)    | ❌     | ❌              | ❌            | -           |                                    |
+| Symbol Table                     | ❌     | ❌              | ❌            | -           |                                    |
+| Intermediate Representation (IR) | ❌     | ❌              | ❌            | -           |                                    |
+| Bytecode Generator               | ❌     | ❌              | ❌            | -           |                                    |
+| Virtual Machine (VM)             | ❌     | ❌              | ❌            | -           |                                    |
+| JVM Backend (Jasmin)             | ❌     | ❌              | ❌            | -           |                                    |
+| Code Generation Infrastructure   | ❌     | ❌              | ❌            | -           |                                    |
+| Error Handling & Logging         | ❌     | ❌              | ❌            | -           |                                    |
+| Testing (Unit & Integration)     | ❌     | ❌              | ❌            | -           |                                    |
+| Documentation                    | ❌     | ❌              | ❌            | -           |                                    |
 
 ## 📦 Modular Package Structure
 
@@ -93,14 +102,30 @@ src/
 │   ├── TypeCheckerVisitor.java   # Performs semantic analysis (type, scope, etc.)
 │   └── IRGeneratorVisitor.java   # Builds IR from typed AST
 
-├── ir/                           → Intermediate Representation (SSA-style or 3-address)
-│   ├── IRInstruction.java        # Abstract base class
-│   ├── IRBinaryOp.java           # Binary instruction (e.g., ADD t1 t2 → t3)
-│   ├── IRLabel.java              # Labels for jumps/branches
-│   ├── IRJump.java               # Unconditional and conditional jumps
-│   ├── IRFunction.java           # Function container (name, params, body)
-│   ├── IRValue.java              # Base for variables, constants, etc.
-│   └── IRProgram.java            # Full IR program (all functions)
+├── ir/
+│   ├── IRInstruction.java         # Base class for all IR instructions
+│   ├── IRBinaryOp.java            # a = b op c  (ADD, SUB, etc.)
+│   ├── IRUnaryOp.java             # a = op b    (NEG, NOT, etc.)
+│   ├── IRLoad.java                # a = load var
+│   ├── IRStore.java               # store a into var
+│   ├── IRPushConst.java           # push constant onto stack
+│   ├── IRCall.java                # call function and push return value
+│   ├── IRReturn.java              # return from function
+│   ├── IRLabel.java               # label for control flow
+│   ├── IRJump.java                # unconditional jump
+│   ├── IRJumpIf.java              # conditional jump if top of stack is true
+│   ├── IRPop.java                 # pop top of stack (used for discard)
+│   ├── IRComment.java             # optional: for debug/info
+│   ├── IRNop.java                 # no-op (placeholder)
+│   ├── IRFunction.java            # represents a function: name, params, instructions
+│   ├── IRTemp.java                # temporary SSA-style value
+│   ├── IRValue.java               # abstract base (consts, vars, temps)
+│   ├── IRConst.java               # literal constant (int, float, string...)
+│   ├── IRVar.java                 # declared variable (name + type)
+│   ├── IRProgram.java             # root container for all functions
+│   ├── IROpcode.java              # Enum for supported binary/unary ops (ADD, EQ, AND, etc.)
+│   ├── IRType.java                # Encoded type info for operands (int, bool, ref...)
+│   ├── IRPrinter.java             # Dumps IR to text (for debug)
 
 ├── bytecode/                     → Custom VM bytecode representation & generator
 │   ├── BytecodeInstruction.java  # Base class for bytecode instruction
@@ -132,9 +157,11 @@ src/
 │   ├── CompilerLogger.java       # Logs per compilation unit with file/position info
 │   └── CliLogger.java            # Logs output at CLI level
 
+
 ├── util/                         → Shared tools and settings
 │   ├── CompilationOptions.java   # Holds parsed command-line config state
 │   └── PositionInFile.java       # Tracks line/column in source input
+
 
 ├── grammar/                      → Language design artifacts
 │   ├── Grammar.md                # Current LL(1)-compatible grammar
@@ -143,10 +170,11 @@ src/
 └── exception/                    → Error and exception types
     ├── CompilerException.java    # Generic fatal exception
     ├── LexicalException.java     # Thrown during lexing
-    └── ParseException.java       # Thrown during parsing
-    ├── LexicalException.java     # Thrown during lexing
-    └── ParseException.java       # Thrown during parsing
-    
+    ├── ParseException.java       # Thrown during parsing
+    ├── SemanticException.java    # Thrown during semantic analysis
+    ├── CodegenException.java     # Thrown during code generation
+    └── VMException.java          # Thrown during VM execution
+        
 ```
 
 ---
@@ -157,6 +185,8 @@ The compiler uses a fully hand-written **LL(1) recursive descent parser**, and t
 - no left-recursion,
 - predictable parse paths with single-token lookahead,
 - full compatibility with recursive descent parsing techniques.
+
+Complete grammar is available in `notes/grammar/Schiemens.g4`. (Open with any text editor) 
 
 ### 🧠 Expression hierarchy
 
@@ -283,25 +313,31 @@ java CompilationApp -i src/utils.sc -o out/utils.pain -c
 java CompilationApp -i src/main.sc -o out/main.pain -c
 
 # Compile to assembly output
-java CompilationApp -i src/main.sc -o out/main.pain -target asm
+java CompilationApp -i src/main.sc -o out/main.pain -target svm
 ```
 
 ---
 
 ## ⚙️ Compiler Options
 
-| Option      | Parameter           | Description                                                                                          |
-|-------------|---------------------|------------------------------------------------------------------------------------------------------|
-| `-help`     | *(none)*            | Displays this help screen                                                                            |
-| `-i`        | `<source-file(s)>`  | Input source files                                                                                   |
-| `-o`        | `<output-file>`     | Output file                                                                                          |
-| `-c`        | *(none)*            | Compile each file separately                                                                         |
-| `-version`  | *(none)*            | Shows the current version                                                                            |
-| `-time`     | *(none)*            | Displays compilation time                                                                            |
-| `-ast`      | *(none)*            | Writes AST to file                                                                                   |
-| `-log`      | *(none)*            | Keeps the log file after compilation                                                                 |
-| `-verify`   | *(none)*            | Syntax check only, no code generation                                                                |
-| `-target`   | `<target-name>`     | Defines the target system to compile to (default: `sm`)<br/> use `asm` to generate assembly x86 code |
+| Option           | Parameter          | Description                                                                     |
+|------------------|--------------------|---------------------------------------------------------------------------------|
+| `-help`          | *(none)*           | Displays this help screen                                                       |
+| `-i`             | `<source-file(s)>` | Input source files (one or more `.sc` files)                                    |
+| `-o`             | `<output-file>`    | Output file path (for `.pain` bytecode output)                                  |
+| `-c`             | *(none)*           | Compile each file separately (multi-unit mode)                                  |
+| `-version`       | *(none)*           | Prints the compiler version                                                     |
+| `-time`          | *(none)*           | Prints time taken for each compilation phase                                    |
+| `-ast`           | *(none)*           | Writes the generated AST (Abstract Syntax Tree) to a human-readable `.ast` file |
+| `-log`           | *(none)*           | Keeps detailed log output per phase (lexer, parser, semantic)                   |
+| `-verify`        | *(none)*           | Only checks syntax and semantics, skips code generation                         |
+| `-target`        | `<target-name>`    | Target output backend (default: `svm`) → others: `jasmin`, `ir`                 |
+| `-dump-tokens`   | *(none)*           | Dumps raw token list to `.tokens`                                               |
+| `-dump-parse`    | *(none)*           | Dumps full parse tree (`ParseNode`) to `.parse` file                            |
+| `-dump-ir`       | *(none)*           | Dumps generated IR (Intermediate Representation) to `.ir`                       |
+| `-dump-bytecode` | *(none)*           | Dumps generated bytecode (text form) to `.bytecode`                             |
+| `-dump-all`      | *(none)*           | Dumps all generated information-files (text form) to `.all`                     |
+| `-no-cleanup`    | *(none)*           | Keeps all intermediate files for debug purposes (tokens, AST, IR, etc.)         |
 
 ---
 
@@ -309,29 +345,30 @@ java CompilationApp -i src/main.sc -o out/main.pain -target asm
 
 `.sc` source files support a single directive: `#include "file.sc"`. Each file is only included once to avoid duplication.
 
-- Recursive and cyclic includes are handled
-- Preprocessing is phase 1 of compilation
-- Includes are fully expanded before lexing
+- Recursive and cyclic includes are detected and prevented
+- Preprocessing is the **first phase** of compilation
+- Includes are fully expanded **before** tokenization (just like C/C++)
 
 ---
 
-## 🧠 Architecture Notes
+## 🧠 Architecture Notes (Compiler Internals)
 
-- Only **tokens**, **parse trees**, and **AST nodes** are kept in memory during compilation
-- **Source files** and **logs** are file-backed for performance and memory efficiency
-- Temporary files are cleaned up unless `-log` or `-ast` flags are enabled
-- Errors from all phases (lexer, parser, semantic analysis) are reported in the terminal (first 20) and written to the log
-- The compiler architecture is **fully modular**, enabling isolated testing and substitution of any phase
+- **Tokens**, **Parse Trees**, **AST**, and **IR** are held in-memory for a single compilation unit
+- All file-based source input is preprocessed and stored **line-faithfully** for **error reporting**
+- Each phase is **modular** 
+- **Intermediate artifacts** (tokens, AST, IR, bytecode) can be dumped for inspection via `-dump-*` flags
+- Temporary files are automatically cleaned up unless one of these is set: `-log`, `-ast`, `-no-cleanup`, `-dump-all` ...
+- Compiler errors are:
+    - **Logged** with full file path, line, and column
+    - **Printed to terminal** in gcc-style (without colors) format (e.g., `source.sc:14:5: error: unknown variable 'x'`)
+    - **Visualized** with marked lines and carets, e.g.:
 
----
-## 🧠 Architecture Notes
+```
+14 |   int result = x + 1;
+                  ^
+     undeclared variable: 'x'
+```
 
-- Only Tokens, AST and tree structures are kept in memory
-- Source files, logs are file-based
-- Temporary files are deleted unless `-log` or `-ast` is active
-- Errors from lexer/parser/AST are printed to the console (first 20) and logged
-
----
 
 ### 🔄 Full Compilation Pipeline (Overview)
 
@@ -374,40 +411,20 @@ The Schiemens compiler processes source code in the following pipeline:
 7. **Intermediate Representation (IR) Generation**
     - Converts AST into a simple **stack-based intermediate representation**
     - IR instructions are independent of output format
-    - Facilitates optimizations and multiple backends
 
 8. **Bytecode Generation**
     - Converts IR into final **custom bytecode**
     - Encodes operations, constants, and program layout
-    - Target output is `.pain` bytecode format, designed for execution on a VM
+    - Target output is `.pain` bytecode format, designed for execution on SVM
 
 9. **Execution (optional, via VM)**
-    - The generated bytecode can be executed using a custom-built **Schiemens Virtual Machine (VM)**
+    - The generated bytecode can be executed using a custom-built **Schiemens Virtual Machine (SVM)**
     - The VM manages:
         - Operand stack, call stack, heap memory
         - Dynamic object creation and method dispatch
         - Instruction decoding and program control flow
 
 ---
-
-### 🧭 Visual Flowchart (High-level)
-
-```mermaid
-flowchart TD
-    A[Start / CLI Input] --> B[Preprocessor]
-    B --> C[Lexer: tokenize]
-    C --> D[TokenStream]
-    D --> E[Parser: Parse Tree]
-    E --> F[ASTBuilderVisitor]
-    F --> G[AST: Abstract Syntax Tree]
-    G --> H[TypeCheckerVisitor]
-    H --> I{Semantic Errors?}
-    I -- Yes --> J[Logger: Print + Abort]
-    I -- No --> K[Code Generator (planned)]
-    K --> L[Target Code Output]
-    J --> M[End]
-    L --> M
-```
 
 ## 📊 Class Diagram
 
