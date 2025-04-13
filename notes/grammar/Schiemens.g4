@@ -13,12 +13,11 @@ argList: varDescription (',' varDescription)* ;
 //class
 classDec: CLASS identifier
 	'{' classInsideGroup* '}' ;
-classInsideGroup: visibilty classInside+ ;
+classInsideGroup: classInside+ ;
 classInside: classConstructor | classField | method ;
-visibilty: PUBLIC | PRIVATE ;
-classConstructor: visibilty identifier fParam block ;
-method: visibilty fHeader fParam block ;
-classField: visibilty typemodifier? varDescription constInit? SEMI ;
+classConstructor: identifier fParam block ;
+method: fHeader fParam block ;
+classField: typemodifier? varDescription constInit? SEMI ;
 
 //programflow & statements
 block: '{' stmt* '}' ;
@@ -151,8 +150,6 @@ VOID: 'void' ;
 FUNC: 'func' ;
 GLOBAL: 'global' ;
 
-PRIVATE: 'private' ;
-PUBLIC: 'public' ;
 FINAL: 'final' ;
 STATIC: 'static' ;
 
