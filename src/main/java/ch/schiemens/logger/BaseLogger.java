@@ -1,16 +1,33 @@
-package ch.schiemens.logger.frontend;
+package ch.schiemens.logger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class BaseLogger {
 
     private final Path sourcePath;
     private final Path logFilePath;
     private final BufferedWriter writer;
+
+    public enum LogLevel {
+        INFO("[INFO]"), WARNING("[WARNING]"), ERROR("[ERROR]");
+        private final String prefix;
+
+        LogLevel(String prefix) {
+            this.prefix = prefix;
+        }
+
+        @Override
+        public String toString() {
+            return prefix;
+        }
+
+    }
 
     public BaseLogger(Path sourcePath, String phase) {
         this.sourcePath = sourcePath;
@@ -23,12 +40,27 @@ public abstract class BaseLogger {
         }
     }
 
+    public List<String> readLoggedLines(LogLevel filter) {
+        List<String> lines = new ArrayList<>();
+        if (!Files.exists(logFilePath)) return lines;
+        try {
+            for (String line : Files.readAllLines(logFilePath)) {
+                if (filter == LogLevel.INFO || line.startsWith("[" + filter.name())) {
+                    lines.add(line);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read from log file: " + logFilePath, e);
+        }
+        return lines;
+    }
+
     private Path computeLogFilePath(String phase) {
         String base = sourcePath.getFileName().toString().replaceAll("\\.[^.]+$", "");
         return sourcePath.resolveSibling(base + "." + phase + ".log");
     }
 
-    protected void writeLine(String line) {
+    private void writeLine(String line) {
         try {
             writer.write(line);
             writer.newLine();
@@ -46,10 +78,16 @@ public abstract class BaseLogger {
         }
     }
 
-    public abstract void logInfo(String message);
-    public abstract void logWarning(String message);
-    public abstract void logError(String message);
-    public abstract void logDebug(String message);
-    public abstract void logFatal(String message);
+    public void logInfo(String message) {
+        writeLine("[INFO]: " + message);
+    }
+
+    public void logWarning(String message) {
+        writeLine("[WARNING]: " + message);
+    }
+
+    public void logError(String message) {
+        writeLine("[ERROR]: " + message);
+    }
 
 }

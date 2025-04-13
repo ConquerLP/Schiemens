@@ -1,6 +1,7 @@
 package ch.schiemens.logger.frontend.compilationEngine;
 
-import ch.schiemens.logger.frontend.BaseLogger;
+import ch.schiemens.frontend.core.compilationOptions.CompilationOptions;
+import ch.schiemens.logger.BaseLogger;
 
 import java.nio.file.Path;
 
@@ -11,7 +12,7 @@ public class CompilationUnitLogger extends BaseLogger {
     private final LexerLogger lexerLogger;
     private final ParseLogger parseLogger;
     private Phase currentPhase = Phase.PREPROCESSOR;
-    private final CompileOptions compilationOptions;
+    private final CompilationOptions compilationOptions;
 
     public enum Phase {
         PREPROCESSOR("Preprocessing"),
@@ -25,9 +26,13 @@ public class CompilationUnitLogger extends BaseLogger {
             this.name = name;
         }
 
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
-    public CompilationUnitLogger(Path sourcePath, CompileOptions compilationOptions) {
+    public CompilationUnitLogger(Path sourcePath, CompilationOptions compilationOptions) {
         super(sourcePath, "CompilationUnit");
         this.compilationOptions = compilationOptions;
         astLogger = new ASTLogger(sourcePath);

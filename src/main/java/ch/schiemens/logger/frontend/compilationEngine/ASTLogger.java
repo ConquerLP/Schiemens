@@ -1,6 +1,6 @@
 package ch.schiemens.logger.frontend.compilationEngine;
 
-import ch.schiemens.logger.frontend.BaseLogger;
+import ch.schiemens.logger.BaseLogger;
 
 import java.nio.file.Path;
 
