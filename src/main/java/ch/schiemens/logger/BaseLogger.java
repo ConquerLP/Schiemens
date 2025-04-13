@@ -13,6 +13,8 @@ public abstract class BaseLogger {
     private final Path sourcePath;
     private final Path logFilePath;
     private final BufferedWriter writer;
+    private int warningCount = 0;
+    private int errorCount = 0;
 
     public enum LogLevel {
         INFO("[INFO]"), WARNING("[WARNING]"), ERROR("[ERROR]");
@@ -84,10 +86,20 @@ public abstract class BaseLogger {
 
     public void logWarning(String message) {
         writeLine("[WARNING]: " + message);
+        warningCount++;
     }
 
     public void logError(String message) {
         writeLine("[ERROR]: " + message);
+        errorCount++;
+    }
+
+    public boolean hasErrors() {
+        return errorCount > 0;
+    }
+
+    public boolean hasWarnings() {
+        return warningCount > 0;
     }
 
 }

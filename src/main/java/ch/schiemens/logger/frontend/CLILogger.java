@@ -7,6 +7,7 @@ import java.nio.file.Path;
 public class CLILogger extends BaseLogger {
 
     private static final CLILogger INSTANCE = new CLILogger();
+    private static final String CLI = "CLI";
 
     private CLILogger() {
         super(Path.of("cli"), "cli");
@@ -18,27 +19,17 @@ public class CLILogger extends BaseLogger {
 
     @Override
     public void logInfo(String message) {
-        writeLine("[INFO] " + message);
+        super.logInfo(CLI + message);
     }
 
     @Override
     public void logWarning(String message) {
-        writeLine("[WARN] " + message);
+        super.logWarning(CLI + message);
     }
 
     @Override
     public void logError(String message) {
-        writeLine("[ERROR] " + message);
-    }
-
-    @Override
-    public void logDebug(String message) {
-        writeLine("[DEBUG] " + message);
-    }
-
-    @Override
-    public void logFatal(String message) {
-        writeLine("[FATAL] " + message);
+        super.logError(CLI + message);
     }
 
 }
