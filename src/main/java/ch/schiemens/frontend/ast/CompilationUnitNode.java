@@ -1,4 +1,4 @@
-package ch.schiemens.backend.ast;
+package ch.schiemens.frontend.ast;
 
 public class CompilationUnitNode {
 }
