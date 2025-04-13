@@ -1,7 +1,7 @@
 package ch.schiemens.frontend.cli;
 
 import ch.codegen.compiler.compilationEngine.CompileEngine;
-import ch.schiemens.frontend.core.CompileOptions;
+import ch.schiemens.frontend.core.CompilationsOptions;
 
 import java.util.*;
 
@@ -27,7 +27,7 @@ public class CompilationApp {
             System.out.println("Version: " + VERSION);
             return;
         }
-        CompileOptions.parseArguments(options);
+        CompilationsOptions.parseArguments(options);
         CompileEngine.run();
 
 

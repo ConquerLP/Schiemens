@@ -1,7 +1,7 @@
 grammar Schiemens;
 
 //bodys
-program: (func | classDec | globalVar | label) EOF ;
+compilationUnit: (func | classDec | globalVar | label) EOF ;
 
 //function
 func: FUNC fHeader fParam block ;
