@@ -12,6 +12,12 @@ public class PositionInFile {
         this.columnEnd = columnStart + value.length();
     }
 
+    public PositionInFile(int line, int columnStart) {
+        this.line = line;
+        this.columnStart = columnStart;
+        this.columnEnd = columnStart;
+    }
+
     @Override
     public String toString() {
         return "<" + line + ":" + columnStart + "-" + columnEnd + ">";

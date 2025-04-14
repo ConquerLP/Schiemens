@@ -174,8 +174,8 @@ NULL: 'null' ;
 NEW: 'new' ;
 
 //MISC
-INT_LIT: [0-9]+ ;
-DOUBLE_LIT: INT_LIT '.' INT_LIT* ;
+INT_LIT: [1-9][0-9]* ;
+DOUBLE_LIT: [0-9]+ '.' [0-9]* ;
 HEX_LIT: '0x' [0-9a-fA-F]+ ;
 BOOL_LIT: '0b' [01]+ ;
 OCT_LIT: '0' [0-7]+ ;

@@ -2,7 +2,7 @@ package ch.schiemens.frontend.lexer.token;
 
 public enum TokenType {
 
-    IDENTIFIER("identifier"), EOF("eof"),
+    IDENTIFIER("identifier"), EOF("EOF"),
     L_STRING("literal string"), L_CHAR("literal char"), L_INT("literal int"), L_DOUBLE("literal double"),
     L_BOOLEAN("literal boolean"), L_HEX("literal hex"), L_OCTAL("literal octal"), L_BINARY("literal binary"),
 

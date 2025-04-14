@@ -5,10 +5,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseLogger {
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
 
     private final Path sourcePath;
     private final Path logFilePath;
@@ -63,8 +67,9 @@ public abstract class BaseLogger {
     }
 
     private void writeLine(String line) {
+        String timestamp = LocalDateTime.now().format(DATE_FORMAT);
         try {
-            writer.write(line);
+            writer.write("[" + timestamp + "] " + line);
             writer.newLine();
         } catch (IOException e) {
             throw new RuntimeException("Failed to write to log file: " + logFilePath, e);
