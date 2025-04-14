@@ -1,6 +1,6 @@
 package ch.schiemens.logger.frontend.compilationEngine;
 
-import ch.schiemens.logger.frontend.BaseLogger;
+import ch.schiemens.logger.BaseLogger;
 
 import java.nio.file.Path;
 
@@ -12,27 +12,17 @@ public class LexerLogger extends BaseLogger {
 
     @Override
     public void logInfo(String message) {
-
+        super.logInfo("Lexer:" + message);
     }
 
     @Override
     public void logWarning(String message) {
-
+        super.logWarning(message);
     }
 
     @Override
     public void logError(String message) {
-
-    }
-
-    @Override
-    public void logDebug(String message) {
-
-    }
-
-    @Override
-    public void logFatal(String message) {
-
+        super.logError(message);
     }
 
 }
