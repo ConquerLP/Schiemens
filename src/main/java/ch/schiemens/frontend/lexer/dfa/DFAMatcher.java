@@ -49,8 +49,11 @@ public class DFAMatcher {
 
     public DFAMatchResult matchStream(LexerBuffer input) throws IOException {
         State current = startState;
-        StringBuilder consumed = new StringBuilder();
-        DFAMatchResult lastAccepted = null;
+        StringBuilder builder = new StringBuilder();
+        State lastAccepting = null;
+        int acceptLength = -1;
+        int length = 0;
+        input.mark();
         while (!input.isEOF()) {
             char c = (char) input.peek();
             State next = null;
@@ -61,13 +64,22 @@ public class DFAMatcher {
                 }
             }
             if (next == null) break;
-            consumed.append((char) input.advance());
+            builder.append((char) input.advance());
             current = next;
+            length++;
             if (current.isAccepting()) {
-                lastAccepted = new DFAMatchResult(current.getTokenType(), consumed.toString());
+                lastAccepting = current;
+                acceptLength = length;
             }
         }
-        return lastAccepted;
+        if (lastAccepting != null) {
+            input.rollbackToMark();
+            for (int i = 0; i < acceptLength; i++) input.advance();
+            String tokenText = builder.substring(0, acceptLength);
+            return new DFAMatchResult(lastAccepting.getTokenType(), tokenText);
+        }
+        input.rollbackToMark();
+        return null;
     }
 
 }
