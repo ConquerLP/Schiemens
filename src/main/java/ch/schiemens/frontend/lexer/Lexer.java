@@ -27,18 +27,15 @@ public class Lexer {
     }
 
     public List<Token> lex() throws IOException, LexicalException {
+        LexerBuffer buffer = new LexerBuffer(reader);
         StringBuilder value = new StringBuilder();
-        int lineNumber = 1;
-        int columnNumber = 1;
-        int currentChar = -1;
+
         char inputChar = '\0';
         TokenState tokenState = TokenState.START;
         TokenState oldTokenState = TokenState.START;
         boolean hasDot = false;
         String tokenValue = "";
-        do {
-            currentChar = reader.read();
-            inputChar = (char) currentChar;
+        while (true) {
             switch (tokenState) {
                 case START: {
                     hasDot = false;
@@ -135,13 +132,13 @@ public class Lexer {
                 }
                 break;
             }
-            if(tokenState == TokenState.CREATE) {
+            if (tokenState == TokenState.CREATE) {
                 tokenValue = value.toString();
                 tokens.add(TokenFactory.createToken(tokenValue, oldTokenState, logger, new PositionInFile(lineNumber, columnNumber, tokenValue)));
                 tokenState = TokenState.START;
             }
             oldTokenState = tokenState;
-        } while (currentChar != -1);
+        }
         tokens.add(new Token(TokenType.EOF, new PositionInFile(lineNumber, columnNumber)));
         return tokens;
     }
