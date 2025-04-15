@@ -25,14 +25,4 @@ public class Preprocessorlogger extends BaseLogger {
 
     }
 
-    @Override
-    public void logDebug(String message) {
-
-    }
-
-    @Override
-    public void logFatal(String message) {
-
-    }
-
 }
