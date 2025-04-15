@@ -6,7 +6,7 @@ import java.nio.file.Path;
 
 public class LexerLogger extends BaseLogger {
 
-    private final String LEXER = "lexer";
+    private final String LEXER = "Lexer: ";
     
     public LexerLogger(Path sourcePath) {
         super(sourcePath, CompilationUnitLogger.Phase.LEXER.toString());

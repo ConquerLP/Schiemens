@@ -1,6 +1,8 @@
 package ch.schiemens.frontend.lexer;
 
 import ch.schiemens.exception.LexicalException;
+import ch.schiemens.frontend.lexer.dfa.DFAMatchResult;
+import ch.schiemens.frontend.lexer.dfa.DFAMatcher;
 import ch.schiemens.frontend.lexer.token.Token;
 import ch.schiemens.frontend.lexer.token.TokenType;
 import ch.schiemens.logger.frontend.compilationEngine.LexerLogger;
@@ -14,8 +16,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ch.schiemens.frontend.lexer.LexerAtomics.*;
-
 public class Lexer {
 
     private final List<Token> tokens = new ArrayList<>();
@@ -27,58 +27,25 @@ public class Lexer {
         this.logger = logger;
     }
 
-    public List<Token> lex() throws IOException, LexicalException {
-        StringBuilder value = new StringBuilder();
-        int lineNumber = 1;
-        int columnNumber = 1;
-        int currentChar = -1;
-        TokenState tokenState = TokenState.START;
-        TokenState oldState = TokenState.START;
-        do {
-            currentChar = reader.read();
-            switch (tokenState) {
-                case START: {
-                    if(isDigit(currentChar)) {
-                        if(currentChar == '0') {
-                            tokenState = TokenState.OTHER_NUMBER_SYSTEM;
-                        } else {
-                            tokenState = TokenState.INT;
-                        }
-                    }
-                }
-                case OTHER_NUMBER_SYSTEM: {
-
-                };
-                case INT: {
-                    if(isDigit(currentChar)) {
-                        value.append(currentChar);
-                    } else if(currentChar == '.') {
-                        tokenState = TokenState.DOUBLE;
-                        value.append(currentChar);
-                    } else {
-                        switch (tokenState) {
-                            case DOUBLE: {
-                                tokens.add(new Token(TokenType.L_DOUBLE, value.toString(), new PositionInFile(lineNumber, columnNumber)));
-                            } break;
-                            case INT: {
-                                tokens.add(new Token(TokenType.L_INT, value.toString(), new PositionInFile(lineNumber, columnNumber)));
-                            } break;
-                            default: {
-                                if(currentChar == '.') {
-
-                                }
-                            } break;
-                        }
-                    }
-                }
-
+    public List<Token> lex(DFAMatcher matcher) throws IOException, LexicalException {
+        LexerBuffer buffer = new LexerBuffer(reader);
+        while (!buffer.isEOF()) {
+            if (Character.isWhitespace((char) buffer.peek())) {
+                buffer.advance();
+                continue;
             }
-
-
-            oldState = tokenState;
-        } while (currentChar != -1);
-        tokens.add(new Token(TokenType.EOF, new PositionInFile(lineNumber, columnNumber)));
+            DFAMatchResult result = matcher.matchStream(buffer);
+            if (result == null) {
+                logger.logError("DFA matcher failed.");
+            }
+            Token token = new Token(result.getTokenType(), result.getValue(),
+                    new PositionInFile(buffer.getLine(), buffer.getColumn() - result.getValue().length()));
+            tokens.add(token);
+            logger.logInfo("New Token: " + token);
+        }
+        tokens.add(new Token(TokenType.EOF, new PositionInFile(buffer.getLine(), buffer.getColumn())));
         return tokens;
     }
+
 
 }

@@ -57,7 +57,7 @@ public class Token {
 
     @Override
     public String toString() {
-        return String.format("Token(%s, '%s', %s)", type, value, position);
+        return String.format("%s: '%s' %s", type, value, position);
     }
 
 }
