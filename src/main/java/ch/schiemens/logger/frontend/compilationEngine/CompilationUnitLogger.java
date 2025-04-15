@@ -112,42 +112,6 @@ public class CompilationUnitLogger extends BaseLogger {
     }
 
     @Override
-    public void logDebug(String message) {
-        switch (currentPhase) {
-            case PREPROCESSOR:
-                preprocessorlogger.logDebug(message);
-                break;
-            case LEXER:
-                lexerLogger.logDebug(message);
-                break;
-            case PARSER:
-                parseLogger.logDebug(message);
-                break;
-            case AST:
-                astLogger.logDebug(message);
-                break;
-        }
-    }
-
-    @Override
-    public void logFatal(String message) {
-        switch (currentPhase) {
-            case PREPROCESSOR:
-                preprocessorlogger.logFatal(message);
-                break;
-            case LEXER:
-                lexerLogger.logFatal(message);
-                break;
-            case PARSER:
-                parseLogger.logFatal(message);
-                break;
-            case AST:
-                astLogger.logFatal(message);
-                break;
-        }
-    }
-
-    @Override
     public void flush() {
 
     }

@@ -2,12 +2,19 @@ package ch.schiemens.frontend.cli;
 
 import ch.schiemens.frontend.core.CompilationEngine;
 import ch.schiemens.frontend.core.compilationOptions.CompilationOptions;
+import ch.schiemens.frontend.lexer.Lexer;
+import ch.schiemens.frontend.lexer.dfa.SchiemensMatcher;
 import ch.schiemens.logger.BaseLogger;
 import ch.schiemens.logger.frontend.CLILogger;
+import ch.schiemens.logger.frontend.compilationEngine.LexerLogger;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class CompilationApp {
 
     public static void main(String[] args) {
+        /*
         CompilationOptions compilationOptions = CompilationOptions.getInstance();
         CLILogger logger = CLILogger.getInstance();
         ArgumentParser.parseArguments(args, logger, compilationOptions);
@@ -19,6 +26,18 @@ public class CompilationApp {
             compilationEngine.setCompilationOptions(compilationOptions);
             compilationEngine.compile();
         }
+        */
+
+        Path sourcePath = Path.of("D:\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
+        //LexerLogger logger = new LexerLogger(sourcePath);
+        try {
+            Lexer lexer = new Lexer(sourcePath, null);
+            SchiemensMatcher.build();
+            lexer.lex(SchiemensMatcher.getMatcher());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 }

@@ -20,12 +20,8 @@ public class DFAFactory {
         return master;
     }
 
-    public void register(String name, DFAMatcher.State state) {
+    private void register(String name, DFAMatcher.State state) {
         namedStates.put(name, state);
-    }
-
-    public DFAMatcher.State get(String name) {
-        return namedStates.get(name);
     }
 
     public void connect(String fromName, CharacterPredicate condition, String toName) {

@@ -36,16 +36,15 @@ public class Lexer {
             }
             DFAMatchResult result = matcher.matchStream(buffer);
             if (result == null) {
-                logger.logError("DFA matcher failed.");
+                //logger.logError("DFA matcher failed.");
             }
             Token token = new Token(result.getTokenType(), result.getValue(),
-                    new PositionInFile(buffer.getLine(), buffer.getColumn() - result.getValue().length()));
+                    new PositionInFile(buffer.getLine(), buffer.getColumn() - result.getValue().length(), buffer.getColumn()));
             tokens.add(token);
-            logger.logInfo("New Token: " + token);
+            //logger.logInfo("New Token: " + token);
         }
-        tokens.add(new Token(TokenType.EOF, new PositionInFile(buffer.getLine(), buffer.getColumn())));
+        tokens.add(new Token(TokenType.EOF, new PositionInFile(buffer.getLine(), buffer.getColumn(), buffer.getColumn())));
         return tokens;
     }
-
 
 }
