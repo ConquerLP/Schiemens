@@ -5,7 +5,6 @@ import ch.schiemens.frontend.lexer.token.Token;
 import ch.schiemens.frontend.lexer.token.TokenFactory;
 import ch.schiemens.frontend.lexer.token.TokenType;
 import ch.schiemens.logger.frontend.compilationEngine.LexerLogger;
-import ch.schiemens.util.PositionInFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,35 +20,56 @@ public class Lexer {
     private final BufferedReader reader;
     private final LexerLogger logger;
 
+    private final LexerBuffer lexerBuffer;
+    private final StringBuilder tokenValue = new StringBuilder();
+    private final TokenFactory tokenFactory;
+    private char currentChar;
+    private char peekedChar;
+    private TokenState currentTokenState;
+    private TokenState oldTokenState;
+    private boolean hasDot = false;
+    private String tokenValueString;
+
     public Lexer(Path path, LexerLogger logger) throws IOException {
         this.reader = Files.newBufferedReader(path, StandardCharsets.US_ASCII);
         this.logger = logger;
+        lexerBuffer = new LexerBuffer(reader);
+        tokenFactory = new TokenFactory(logger, lexerBuffer);
+    }
+
+    private void initLexer() {
+        tokenValue.delete(0, tokenValue.length());
+        currentChar = '\0';
+        peekedChar = '\0';
+        currentTokenState = TokenState.START;
+        oldTokenState = TokenState.START;
+        tokenValueString = "";
+        hasDot = false;
+    }
+
+    private void createToken() {
+        tokenValueString = tokenValue.toString();
+        tokens.add(tokenFactory.createToken(tokenValueString, oldTokenState));
+        initLexer();
     }
 
     public List<Token> lex() throws IOException, LexicalException {
-        LexerBuffer buffer = new LexerBuffer(reader);
-        StringBuilder value = new StringBuilder();
-
-        char inputChar = '\0';
-        TokenState tokenState = TokenState.START;
-        TokenState oldTokenState = TokenState.START;
-        boolean hasDot = false;
-        String tokenValue = "";
-        while (true) {
-            switch (tokenState) {
+        initLexer();
+        tokens.clear();
+        while (!lexerBuffer.isEOF()) {
+            switch (currentTokenState) {
                 case START: {
-                    hasDot = false;
-                    if (LexerAtomics.isZero(inputChar)) {
-                        tokenState = TokenState.NUMBER_SYSTEM;
-                        value.append(inputChar);
-                    } else if (LexerAtomics.isNaturalNumber(inputChar)) {
-                        tokenState = TokenState.INT;
-                        value.append(inputChar);
-                    } else if (LexerAtomics.isSymbol(inputChar)) {
+                    if (LexerAtomics.isZero(currentChar)) {
+                        currentTokenState = TokenState.NUMBER_SYSTEM;
+                        tokenValue.append(currentChar);
+                    } else if (LexerAtomics.isNaturalNumber(currentChar)) {
+                        currentTokenState = TokenState.INT;
+                        tokenValue.append(currentChar);
+                    } else if (LexerAtomics.isSymbol(currentChar)) {
 
-                    } else if (LexerAtomics.isIdentifierStart(inputChar)) {
+                    } else if (LexerAtomics.isIdentifierStart(currentChar)) {
 
-                    } else if (LexerAtomics.isWhitespace(inputChar)) {
+                    } else if (LexerAtomics.isWhitespace(currentChar)) {
 
                     } else {
                         //logger.logError("Unexpected character: " + inputChar + new PositionInFile(lineNumber, columnNumber));
@@ -57,17 +77,17 @@ public class Lexer {
                 }
                 break;
                 case NUMBER_SYSTEM: {
-                    if (LexerAtomics.isDecimal(inputChar)) {
-                        tokenState = TokenState.INT;
-                        value.append(inputChar);
-                    } else if (LexerAtomics.isHexStart(inputChar)) {
-                        tokenState = TokenState.HEX;
-                        value.append(inputChar);
-                    } else if (LexerAtomics.isBinaryStart(inputChar)) {
-                        tokenState = TokenState.BINARY;
-                        value.append(inputChar);
+                    if (LexerAtomics.isDecimal(currentChar)) {
+                        currentTokenState = TokenState.INT;
+                        tokenValue.append(currentChar);
+                    } else if (LexerAtomics.isHexStart(currentChar)) {
+                        currentTokenState = TokenState.HEX;
+                        tokenValue.append(currentChar);
+                    } else if (LexerAtomics.isBinaryStart(currentChar)) {
+                        currentTokenState = TokenState.BINARY;
+                        tokenValue.append(currentChar);
                     } else {
-                        tokenState = TokenState.CREATE;
+                        currentTokenState = TokenState.CREATE;
                     }
                 }
                 break;
@@ -99,22 +119,22 @@ public class Lexer {
                 }
                 break;
                 case DOUBLE: {
-                    if (LexerAtomics.isDot(inputChar) && hasDot) {
-                        tokenState = TokenState.ERROR;
-                        value.append(inputChar);
+                    if (LexerAtomics.isDot(currentChar) && hasDot) {
+                        currentTokenState = TokenState.ERROR;
+                        tokenValue.append(currentChar);
                     }
                 }
                 break;
                 case INT: {
-                    if (LexerAtomics.isDot(inputChar)) {
+                    if (LexerAtomics.isDot(currentChar)) {
                         hasDot = true;
-                        tokenState = TokenState.DOUBLE;
-                        value.append(inputChar);
-                    } else if (LexerAtomics.isDecimal(inputChar)) {
-                        tokenState = TokenState.INT;
-                        value.append(inputChar);
+                        currentTokenState = TokenState.DOUBLE;
+                        tokenValue.append(currentChar);
+                    } else if (LexerAtomics.isDecimal(currentChar)) {
+                        currentTokenState = TokenState.INT;
+                        tokenValue.append(currentChar);
                     } else {
-                        tokenState = TokenState.CREATE;
+                        currentTokenState = TokenState.CREATE;
                     }
                 }
                 break;
@@ -131,16 +151,16 @@ public class Lexer {
                     //logger.logError("Lexical error: " + inputChar + new PositionInFile(lineNumber, columnNumber, value.toString()));
                 }
                 break;
+                case CREATE: {
+                    createToken();
+                }
+                break;
             }
-            if (tokenState == TokenState.CREATE) {
-                tokenValue = value.toString();
-                tokens.add(TokenFactory.createToken(tokenValue, oldTokenState, logger, new PositionInFile(lineNumber, columnNumber, tokenValue)));
-                tokenState = TokenState.START;
-            }
-            oldTokenState = tokenState;
+            currentChar = (char) lexerBuffer.consume();
         }
-        tokens.add(new Token(TokenType.EOF, new PositionInFile(lineNumber, columnNumber)));
+        tokens.add(new Token(TokenType.EOF, lexerBuffer.makePositionInFile()));
         return tokens;
     }
+
 
 }

@@ -102,4 +102,5 @@ public class LexerAtomics {
     public static boolean isDot(char inputChar) {
         return inputChar == '.';
     }
+
 }
