@@ -11,12 +11,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+
+import static ch.schiemens.frontend.lexer.LexerAtomics.*;
 
 public class Lexer {
 
-    private final List<Token> tokens = new ArrayList<>();
     private final BufferedReader reader;
     private final LexerLogger logger;
 
@@ -24,10 +23,8 @@ public class Lexer {
     private final StringBuilder tokenValue = new StringBuilder();
     private final TokenFactory tokenFactory;
     private char currentChar;
-    private char peekedChar;
     private TokenState currentTokenState;
     private TokenState oldTokenState;
-    private boolean hasDot = false;
     private String tokenValueString;
 
     public Lexer(Path path, LexerLogger logger) throws IOException {
@@ -37,114 +34,77 @@ public class Lexer {
         tokenFactory = new TokenFactory(logger, lexerBuffer);
     }
 
-    private void initLexer() {
+    private void initTokenState() {
         tokenValue.delete(0, tokenValue.length());
-        currentChar = '\0';
-        peekedChar = '\0';
         currentTokenState = TokenState.START;
         oldTokenState = TokenState.START;
+        currentChar = '\0';
         tokenValueString = "";
-        hasDot = false;
     }
 
-    private void createToken() {
+    private Token createTokenBacktrack() {
+        lexerBuffer.goBack();
+        tokenValue.deleteCharAt(tokenValue.length() - 1);
+        return createToken();
+    }
+
+    private Token createToken() {
+        Token token;
         tokenValueString = tokenValue.toString();
-        tokens.add(tokenFactory.createToken(tokenValueString, oldTokenState));
-        initLexer();
+        token = tokenFactory.createToken(tokenValueString, oldTokenState);
+        initTokenState();
+        return token;
     }
 
-    public List<Token> lex() throws IOException, LexicalException {
-        initLexer();
-        tokens.clear();
-        while (!lexerBuffer.isEOF()) {
+    private void setState(TokenState state) {
+        oldTokenState = currentTokenState;
+        currentTokenState = state;
+        tokenValue.append(currentChar);
+    }
+
+    public Token nextToken() throws IOException, LexicalException {
+        initTokenState();
+        Token token = null;
+        do {
+            if (lexerBuffer.isEOF()) {
+                token = new Token(TokenType.EOF, lexerBuffer.makePositionInFile());
+                break;
+            }
+            currentChar = (char) lexerBuffer.consume();
             switch (currentTokenState) {
                 case START: {
-                    if (LexerAtomics.isZero(currentChar)) {
-                        currentTokenState = TokenState.NUMBER_SYSTEM;
-                        tokenValue.append(currentChar);
-                    } else if (LexerAtomics.isNaturalNumber(currentChar)) {
-                        currentTokenState = TokenState.INT;
-                        tokenValue.append(currentChar);
-                    } else if (LexerAtomics.isSymbol(currentChar)) {
+                    if (isWhitespace(currentChar)) setState(TokenState.START);
+                    else if (currentChar == '0') setState(TokenState.NUM_INT);
+                    else if (isDecimal(currentChar)) setState(TokenState.INT);
+                    else if (isIdentifierStart(currentChar)) setState(TokenState.IDENTIFIER);
+                        //single character symbols
+                    else if (currentChar == '(') setState(TokenState.S_PAREN_START);
+                    else if (currentChar == ')') setState(TokenState.S_PAREN_END);
+                    else if (currentChar == '[') setState(TokenState.S_ARRAY_START);
+                    else if (currentChar == ']') setState(TokenState.S_ARRAY_END);
+                    else if (currentChar == '{') setState(TokenState.S_CURLY_BRACKET_START);
+                    else if (currentChar == '}') setState(TokenState.S_CURLY_BRACKET_END);
+                    else if (currentChar == '.') setState(TokenState.S_DOT);
+                    else if (currentChar == ';') setState(TokenState.S_SEMI);
+                    else if (currentChar == ',') setState(TokenState.S_COMMA);
+                        //multiple character symbols
+                    else if (currentChar == '+') setState(TokenState.S_PLUS);
+                    else if (currentChar == '-') setState(TokenState.S_MINUS);
+                    else if (currentChar == '*') setState(TokenState.S_MUL);
+                    else if (currentChar == '/') setState(TokenState.S_DIV);
+                    else if (currentChar == '%') setState(TokenState.S_MOD);
+                    else if (currentChar == '^') setState(TokenState.S_EXPO);
+                    else if (currentChar == '<') setState(TokenState.S_LT);
+                    else if (currentChar == '>') setState(TokenState.S_GT);
+                    else if (currentChar == '!') setState(TokenState.S_NOT);
+                    else if (currentChar == '|') setState(TokenState.S_OR_S);
+                    else if (currentChar == '&') setState(TokenState.S_AND_S);
+                    else if (currentChar == '=') setState(TokenState.S_EQ);
+                        //char and string
+                    else if (currentChar == '\'') setState(TokenState.CHAR_S);
+                    else if (currentChar == '\"') setState(TokenState.STRING_S);
 
-                    } else if (LexerAtomics.isIdentifierStart(currentChar)) {
-
-                    } else if (LexerAtomics.isWhitespace(currentChar)) {
-
-                    } else {
-                        //logger.logError("Unexpected character: " + inputChar + new PositionInFile(lineNumber, columnNumber));
-                    }
-                }
-                break;
-                case NUMBER_SYSTEM: {
-                    if (LexerAtomics.isDecimal(currentChar)) {
-                        currentTokenState = TokenState.INT;
-                        tokenValue.append(currentChar);
-                    } else if (LexerAtomics.isHexStart(currentChar)) {
-                        currentTokenState = TokenState.HEX;
-                        tokenValue.append(currentChar);
-                    } else if (LexerAtomics.isBinaryStart(currentChar)) {
-                        currentTokenState = TokenState.BINARY;
-                        tokenValue.append(currentChar);
-                    } else {
-                        currentTokenState = TokenState.CREATE;
-                    }
-                }
-                break;
-                case KEYWORD: {
-                }
-                break;
-                case IDENTIFIER: {
-                }
-                break;
-                case SYMBOL: {
-                }
-                break;
-                case WHITESPACE: {
-                }
-                break;
-                case COMMENT: {
-                }
-                break;
-                case BIG_COMMENT: {
-                }
-                break;
-                case EOF: {
-                }
-                break;
-                case STRING: {
-                }
-                break;
-                case CHAR: {
-                }
-                break;
-                case DOUBLE: {
-                    if (LexerAtomics.isDot(currentChar) && hasDot) {
-                        currentTokenState = TokenState.ERROR;
-                        tokenValue.append(currentChar);
-                    }
-                }
-                break;
-                case INT: {
-                    if (LexerAtomics.isDot(currentChar)) {
-                        hasDot = true;
-                        currentTokenState = TokenState.DOUBLE;
-                        tokenValue.append(currentChar);
-                    } else if (LexerAtomics.isDecimal(currentChar)) {
-                        currentTokenState = TokenState.INT;
-                        tokenValue.append(currentChar);
-                    } else {
-                        currentTokenState = TokenState.CREATE;
-                    }
-                }
-                break;
-                case BINARY: {
-                }
-                break;
-                case HEX: {
-                }
-                break;
-                case OCTAL: {
+                    else setState(TokenState.ERROR);
                 }
                 break;
                 case ERROR: {
@@ -152,15 +112,293 @@ public class Lexer {
                 }
                 break;
                 case CREATE: {
-                    createToken();
+                    token = createToken();
+                }
+                break;
+                case CREATE_B: {
+                    token = createTokenBacktrack();
+                }
+                break;
+                // numbers
+                case NUM_INT: {
+                    if (currentChar == 'o') setState(TokenState.OCTAL_S);
+                    else if (currentChar == 'x') setState(TokenState.HEX_S);
+                    else if (currentChar == 'b') setState(TokenState.BINARY_S);
+                    else if (isDecimal(currentChar)) setState(TokenState.INT);
+                    else if (currentChar == '.') setState(TokenState.DOUBLE_S);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case OCTAL_S: {
+                    if (isOctal(currentChar)) setState(TokenState.OCTAL_E);
+                    else setState(TokenState.ERROR);
+                }
+                break;
+                case OCTAL_E: {
+                    if (isOctal(currentChar)) setState(TokenState.OCTAL_E);
+                    else setState(TokenState.CREATE);
+                }
+                break;
+                case HEX_S: {
+                    if (isHexadecimal(currentChar)) setState(TokenState.HEX_E);
+                    else setState(TokenState.ERROR);
+                }
+                break;
+                case HEX_E: {
+                    if (isHexadecimal(currentChar)) setState(TokenState.HEX_E);
+                    else setState(TokenState.CREATE);
+                }
+                break;
+                case BINARY_S: {
+                    if (isBinary(currentChar)) setState(TokenState.BINARY_E);
+                    else setState(TokenState.ERROR);
+                }
+                break;
+                case BINARY_E: {
+                    if (isBinary(currentChar)) setState(TokenState.BINARY_E);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case INT: {
+                    if (isDecimal(currentChar)) setState(TokenState.INT);
+                    else if (currentChar == '.') setState(TokenState.DOUBLE_S);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case DOUBLE_S: {
+                    if (isDecimal(currentChar)) setState(TokenState.DOUBLE_E);
+                    else setState(TokenState.ERROR);
+                }
+                break;
+                case DOUBLE_E: {
+                    if (isDecimal(currentChar)) setState(TokenState.DOUBLE_E);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                //single character symbols
+                case S_PAREN_START: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_PAREN_END: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_ARRAY_START: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_ARRAY_END: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_CURLY_BRACKET_START: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_CURLY_BRACKET_END: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_DOT: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_SEMI: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_COMMA: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                //multiple character symbols
+                case S_PLUS: {
+                    if (currentChar == '+') setState(TokenState.S_PLUS_PLUS);
+                    else if (currentChar == '=') setState(TokenState.S_PLUS_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_MINUS: {
+                    if (currentChar == '-') setState(TokenState.S_MINUS_MINUS);
+                    else if (currentChar == '=') setState(TokenState.S_MINUS_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_MUL: {
+                    if (currentChar == '*') setState(TokenState.S_EXPO_MUL);
+                    else if (currentChar == '=') setState(TokenState.S_MUL_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_DIV: {
+                    if (currentChar == '=') setState(TokenState.S_DIV_EQ);
+                    else if (currentChar == '/') setState(TokenState.S_INLINE_COMMENT);
+                    else if (currentChar == '*') setState(TokenState.MULTI_LINE_COMMENT_S);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_MOD: {
+                    if (currentChar == '=') setState(TokenState.S_MOD_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_EXPO: {
+                    if (currentChar == '=') setState(TokenState.S_EXPO_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_EXPO_MUL: {
+                    if (currentChar == '=') setState(TokenState.S_EXPO_MUL_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_EXPO_MUL_EQ: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_GT: {
+                    if (currentChar == '=') setState(TokenState.S_GT_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_GT_EQ: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_LT: {
+                    if (currentChar == '=') setState(TokenState.S_LT_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_LT_EQ: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_NOT: {
+                    if (currentChar == '=') setState(TokenState.S_NOT_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_NOT_EQ: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_OR_S: {
+                    if (currentChar == '|') setState(TokenState.S_OR_E);
+                    else setState(TokenState.ERROR);
+                }
+                break;
+                case S_OR_E: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_AND_S: {
+                    if (currentChar == '&') setState(TokenState.S_AND_S);
+                    else setState(TokenState.ERROR);
+                }
+                break;
+                case S_AND_E: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_EQ: {
+                    if (currentChar == '=') setState(TokenState.S_EQ_EQ);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                case S_EQ_EQ: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                //char
+                case CHAR_S: {
+                    if (currentChar == '\\') setState(TokenState.CHAR_MULTI_S);
+                    else if (currentChar == '\'') setState(TokenState.ERROR);
+                        // not correct? how about ascii 32 to 126?
+                    else setState(TokenState.CHAR_SINGLE);
+                }
+                break;
+                case CHAR_SINGLE: {
+                    if (currentChar == '\'') setState(TokenState.CHAR_E);
+                    else setState(TokenState.ERROR);
+                }
+                break;
+                case CHAR_MULTI_S: {
+                    if (currentChar == '\'') setState(TokenState.ERROR);
+                    else setState(TokenState.CHAR_MULTI_E);
+                }
+                break;
+                case CHAR_MULTI_E: {
+                    if (currentChar == '\'') setState(TokenState.CHAR_MULTI_E);
+                    else setState(TokenState.ERROR);
+                }
+                break;
+                case CHAR_E: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                //string
+                case STRING_S: {
+                    if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
+                    else if (currentChar == '"') setState(TokenState.STRING_E);
+                    else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
+                    else setState(TokenState.STRING_SINGLE);
+                }
+                break;
+                case STRING_SINGLE: {
+                    if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
+                    else if (currentChar == '"') setState(TokenState.STRING_E);
+                    else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
+                    else setState(TokenState.STRING_SINGLE);
+                }
+                break;
+                case STRING_MULTI_S: {
+                    if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
+                    else setState(TokenState.STRING_MULTI_E);
+                }
+                break;
+                case STRING_MULTI_E: {
+                    if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
+                    else if (currentChar == '"') setState(TokenState.STRING_E);
+                    else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
+                    else setState(TokenState.STRING_SINGLE);
+                }
+                break;
+                case STRING_E: {
+                    setState(TokenState.CREATE_B);
+                }
+                break;
+                //identifier and keywords
+                case IDENTIFIER: {
+                    if (isAlphaNum(currentChar)) setState(TokenState.IDENTIFIER);
+                    else setState(TokenState.CREATE_B);
+                }
+                break;
+                //inline comment
+                case S_INLINE_COMMENT: {
+                    if (isCarriageReturn(currentChar)) setState(TokenState.CREATE_B);
+                    else setState(TokenState.S_INLINE_COMMENT);
+                }
+                break;
+                //multiline comment
+                case MULTI_LINE_COMMENT_S: {
+                    if (currentChar == '*') setState(TokenState.MULTI_LINE_COMMENT_S1);
+                    else setState(TokenState.MULTI_LINE_COMMENT_S);
+                }
+                break;
+                case MULTI_LINE_COMMENT_S1: {
+                    if (currentChar == '/') setState(TokenState.MULTI_LINE_COMMENT_E);
+                    else setState(TokenState.MULTI_LINE_COMMENT_S);
+                }
+                break;
+                case MULTI_LINE_COMMENT_E: {
+                    setState(TokenState.CREATE_B);
                 }
                 break;
             }
-            currentChar = (char) lexerBuffer.consume();
-        }
-        tokens.add(new Token(TokenType.EOF, lexerBuffer.makePositionInFile()));
-        return tokens;
+        } while (token == null);
+        return token;
     }
-
 
 }

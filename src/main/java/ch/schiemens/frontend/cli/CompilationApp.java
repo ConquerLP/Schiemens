@@ -30,7 +30,9 @@ public class CompilationApp {
         //LexerLogger logger = new LexerLogger(sourcePath);
         try {
             Lexer lexer = new Lexer(sourcePath, null);
-            lexer.lex();
+            while(true) {
+                System.out.println(lexer.nextToken());
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -6,21 +6,21 @@ public class PositionInFile {
     private int columnStart;
     private int columnEnd;
 
-    public PositionInFile(int line, int columnStart, String value) {
+    public PositionInFile(int line, int columnEnd, String value) {
         this.line = line;
-        this.columnStart = columnStart;
-        this.columnEnd = columnStart + value.length();
+        this.columnStart = columnEnd - value.length();
+        this.columnEnd = columnEnd;
     }
 
-    public PositionInFile(int line, int columnStart) {
+    public PositionInFile(int line, int columnEnd) {
         this.line = line;
-        this.columnStart = columnStart;
-        this.columnEnd = columnStart;
+        this.columnStart = columnEnd;
+        this.columnEnd = columnEnd;
     }
 
     @Override
     public String toString() {
-        return "<" + line + ":" + columnStart + "-" + columnEnd + ">";
+        return "<" + line + ":" + columnStart + ":" + columnEnd + ">";
     }
 
 }

@@ -10,21 +10,18 @@ public class LexerBuffer {
 
     private final BufferedReader reader;
     private int current = -2;
-    private final static int TAB_SIZE = 4;
+    private static final int TAB_SIZE = 4;
+
     private int line = 1;
     private int column = 1;
 
+    private int lastChar = -2;
+    private int lastLine = 1;
+    private int lastColumn = 1;
+    private boolean canGoBack = false;
+
     public LexerBuffer(Reader reader) {
         this.reader = new BufferedReader(reader);
-    }
-
-    public int peek() throws IOException {
-        if (current == -2) {
-            reader.mark(1);
-            current = reader.read();
-            reader.reset();
-        }
-        return current;
     }
 
     public int consume() throws IOException {
@@ -35,13 +32,16 @@ public class LexerBuffer {
         } else {
             result = reader.read();
         }
+        lastChar = result;
+        lastLine = line;
+        lastColumn = column;
+        canGoBack = true;
         switch (result) {
             case '\n', '\f' -> {
                 line++;
                 column = 1;
             }
             case '\r' -> {
-                reader.mark(1);
                 int next = reader.read();
                 if (next != '\n') {
                     current = next;
@@ -55,8 +55,26 @@ public class LexerBuffer {
         return result;
     }
 
+    public void goBack() {
+        if (!canGoBack || lastChar == -1) {
+            throw new IllegalStateException("Cannot go back more than one step or after EOF");
+        }
+        current = lastChar;
+        line = lastLine;
+        column = lastColumn;
+        canGoBack = false;
+    }
+
     public boolean isEOF() throws IOException {
-        return peek() == -1;
+        if (current != -2) {
+            return current == -1;
+        }
+        reader.mark(1);
+        int c = reader.read();
+        if (c != -1) {
+            reader.reset();
+        }
+        return c == -1;
     }
 
     public PositionInFile makePositionInFile() {
