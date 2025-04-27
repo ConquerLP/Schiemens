@@ -55,151 +55,64 @@ public class TokenFactory {
     }
 
     public Token createToken(String value, TokenState state) {
-        switch (state) {
-            case INT: {
-                return makeToken(TokenType.L_INT, value);
-            }
-            case DOUBLE_E: {
-                return makeToken(TokenType.L_DOUBLE, value);
-            }
-            case OCTAL_E: {
-                return makeToken(TokenType.L_OCTAL, value);
-            }
-            case HEX_E: {
-                return makeToken(TokenType.L_HEX, value);
-            }
-            case BINARY_E: {
-                return makeToken(TokenType.L_BINARY, value);
-            }
-            case S_PAREN_START: {
-                return makeToken(TokenType.S_LPAREN, value);
-            }
-            case S_PAREN_END: {
-                return makeToken(TokenType.S_RPAREN, value);
-            }
-            case S_ARRAY_START: {
-                return makeToken(TokenType.S_LBRACKET, value);
-            }
-            case S_ARRAY_END: {
-                return makeToken(TokenType.S_RBRACKET, value);
-            }
-            case S_CURLY_BRACKET_START: {
-                return makeToken(TokenType.S_LBRACE, value);
-            }
-            case S_CURLY_BRACKET_END: {
-                return makeToken(TokenType.S_RBRACE, value);
-            }
-            case S_DOT: {
-                return makeToken(TokenType.S_DOT, value);
-            }
-            case S_SEMI: {
-                return makeToken(TokenType.S_SEMICOLON, value);
-            }
-            case S_COMMA: {
-                return makeToken(TokenType.S_COMMA, value);
-            }
-            case S_PLUS: {
-                return makeToken(TokenType.S_PLUS, value);
-            }
-            case S_PLUS_PLUS: {
-                return makeToken(TokenType.S_INC, value);
-            }
-            case S_PLUS_EQ: {
-                return makeToken(TokenType.S_ADD_ASSIGN, value);
-            }
-            case S_MINUS: {
-                return makeToken(TokenType.S_MINUS, value);
-            }
-            case S_MINUS_MINUS: {
-                return makeToken(TokenType.S_DEC, value);
-            }
-            case S_MINUS_EQ: {
-                return makeToken(TokenType.S_SUB_ASSIGN, value);
-            }
-            case S_MUL: {
-                return makeToken(TokenType.S_MULT, value);
-            }
-            case S_MUL_EQ: {
-                return makeToken(TokenType.S_MULT_ASSIGN, value);
-            }
-            case S_EXPO_MUL: {
-                return makeToken(TokenType.S_EXP_ALT, value);
-            }
-            case S_EXPO_MUL_EQ: {
-                return makeToken(TokenType.S_EXP_ALT_ASSIGN, value);
-            }
-            case S_DIV: {
-                return makeToken(TokenType.S_DIV, value);
-            }
-            case S_DIV_EQ: {
-                return makeToken(TokenType.S_DIV_ASSIGN, value);
-            }
-            case S_MOD: {
-                return makeToken(TokenType.S_MOD, value);
-            }
-            case S_MOD_EQ: {
-                return makeToken(TokenType.S_MOD_ASSIGN, value);
-            }
-            case S_EXPO: {
-                return makeToken(TokenType.S_EXP, value);
-            }
-            case S_EXPO_EQ: {
-                return makeToken(TokenType.S_EXP_ASSIGN, value);
-            }
-            case S_GT: {
-                return makeToken(TokenType.S_GT, value);
-            }
-            case S_GT_EQ: {
-                return makeToken(TokenType.S_GEQ, value);
-            }
-            case S_LT: {
-                return makeToken(TokenType.S_LT, value);
-            }
-            case S_LT_EQ: {
-                return makeToken(TokenType.S_LEQ, value);
-            }
-            case S_NOT: {
-                return makeToken(TokenType.K_NOT_ALT, value);
-            }
-            case S_NOT_EQ: {
-                return makeToken(TokenType.S_NEQ, value);
-            }
-            case S_OR_E: {
-                return makeToken(TokenType.K_OR_ALT, value);
-            }
-            case S_AND_E: {
-                return makeToken(TokenType.K_AND_ALT, value);
-            }
-            case S_EQ: {
-                return makeToken(TokenType.S_ASSIGN, value);
-            }
-            case S_EQ_EQ: {
-                return makeToken(TokenType.S_EQ, value);
-            }
-            case CHAR_E: {
-                return makeToken(TokenType.L_CHAR, value);
-            }
-            case STRING_E: {
-                return makeToken(TokenType.L_STRING, value);
-            }
-            case S_INLINE_COMMENT: {
-                return makeToken(TokenType.INLINE_COMMENT, value);
-            }
-            case MULTI_LINE_COMMENT_E: {
-                return makeToken(TokenType.MULTI_LINE_COMMENT, value);
-            }
-            case IDENTIFIER: {
-                return makeToken(keywords.getOrDefault(value, TokenType.IDENTIFIER), value);
-            }
-            default: //logger.logError("Unknown token state: " + state);
-        }
-
-        return null;
+        return switch (state) {
+            case INT -> makeToken(TokenType.L_INT, value);
+            case DOUBLE_E -> makeToken(TokenType.L_DOUBLE, value);
+            case OCTAL_E -> makeToken(TokenType.L_OCTAL, value);
+            case HEX_E -> makeToken(TokenType.L_HEX, value);
+            case BINARY_E -> makeToken(TokenType.L_BINARY, value);
+            case S_PAREN_START -> makeToken(TokenType.S_LPAREN, value);
+            case S_PAREN_END -> makeToken(TokenType.S_RPAREN, value);
+            case S_ARRAY_START -> makeToken(TokenType.S_LBRACKET, value);
+            case S_ARRAY_END -> makeToken(TokenType.S_RBRACKET, value);
+            case S_CURLY_BRACKET_START -> makeToken(TokenType.S_LBRACE, value);
+            case S_CURLY_BRACKET_END -> makeToken(TokenType.S_RBRACE, value);
+            case S_DOT -> makeToken(TokenType.S_DOT, value);
+            case S_SEMI -> makeToken(TokenType.S_SEMICOLON, value);
+            case S_COMMA -> makeToken(TokenType.S_COMMA, value);
+            case S_PLUS -> makeToken(TokenType.S_PLUS, value);
+            case S_PLUS_PLUS -> makeToken(TokenType.S_INC, value);
+            case S_PLUS_EQ -> makeToken(TokenType.S_ADD_ASSIGN, value);
+            case S_MINUS -> makeToken(TokenType.S_MINUS, value);
+            case S_MINUS_MINUS -> makeToken(TokenType.S_DEC, value);
+            case S_MINUS_EQ -> makeToken(TokenType.S_SUB_ASSIGN, value);
+            case S_MUL -> makeToken(TokenType.S_MULT, value);
+            case S_MUL_EQ -> makeToken(TokenType.S_MULT_ASSIGN, value);
+            case S_EXPO_MUL -> makeToken(TokenType.S_EXP_ALT, value);
+            case S_EXPO_MUL_EQ -> makeToken(TokenType.S_EXP_ALT_ASSIGN, value);
+            case S_DIV -> makeToken(TokenType.S_DIV, value);
+            case S_DIV_EQ -> makeToken(TokenType.S_DIV_ASSIGN, value);
+            case S_MOD -> makeToken(TokenType.S_MOD, value);
+            case S_MOD_EQ -> makeToken(TokenType.S_MOD_ASSIGN, value);
+            case S_EXPO -> makeToken(TokenType.S_EXP, value);
+            case S_EXPO_EQ -> makeToken(TokenType.S_EXP_ASSIGN, value);
+            case S_GT -> makeToken(TokenType.S_GT, value);
+            case S_GT_EQ -> makeToken(TokenType.S_GEQ, value);
+            case S_LT -> makeToken(TokenType.S_LT, value);
+            case S_LT_EQ -> makeToken(TokenType.S_LEQ, value);
+            case S_NOT -> makeToken(TokenType.K_NOT_ALT, value);
+            case S_NOT_EQ -> makeToken(TokenType.S_NEQ, value);
+            case S_OR_E -> makeToken(TokenType.K_OR_ALT, value);
+            case S_AND_E -> makeToken(TokenType.K_AND_ALT, value);
+            case S_EQ -> makeToken(TokenType.S_ASSIGN, value);
+            case S_EQ_EQ -> makeToken(TokenType.S_EQ, value);
+            case CHAR_E -> makeToken(TokenType.L_CHAR, value);
+            case STRING_E -> makeToken(TokenType.L_STRING, value);
+            case S_INLINE_COMMENT -> makeToken(TokenType.INLINE_COMMENT, value);
+            case MULTI_LINE_COMMENT_E -> makeToken(TokenType.MULTI_LINE_COMMENT, value);
+            case IDENTIFIER -> makeToken(keywords.getOrDefault(value, TokenType.IDENTIFIER), value);
+            default -> makeToken(TokenType.INVALID, value);
+        };
     }
 
     private Token makeToken(TokenType type, String value) {
-        //logger.logInfo("makeToken(" + type + ", " + value + ")");
-        return new Token(type, value, lexerBuffer.makePositionInFile(value));
+        Token token = new Token(type, value, lexerBuffer.makePositionInFile(value));
+        if(type == TokenType.INVALID) {
+            //logger.logError("Created an invalid token: ", token);
+        } else {
+            //logger.logInfo("Created Token: " + token);
+        }
+        return token;
     }
 
 }

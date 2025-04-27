@@ -3,6 +3,8 @@ package ch.schiemens.frontend.cli;
 import ch.schiemens.frontend.core.CompilationEngine;
 import ch.schiemens.frontend.core.compilationOptions.CompilationOptions;
 import ch.schiemens.frontend.lexer.Lexer;
+import ch.schiemens.frontend.lexer.token.Token;
+import ch.schiemens.frontend.lexer.token.TokenType;
 import ch.schiemens.logger.BaseLogger;
 import ch.schiemens.logger.frontend.CLILogger;
 
@@ -30,8 +32,9 @@ public class CompilationApp {
         //LexerLogger logger = new LexerLogger(sourcePath);
         try {
             Lexer lexer = new Lexer(sourcePath, null);
-            while(true) {
-                System.out.println(lexer.nextToken());
+            Token token = lexer.nextToken();
+            while (token.getType() != TokenType.EOF) {
+                System.out.println(token);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

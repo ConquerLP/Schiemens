@@ -16,7 +16,6 @@ import static ch.schiemens.frontend.lexer.LexerAtomics.*;
 
 public class Lexer {
 
-    private final BufferedReader reader;
     private final LexerLogger logger;
 
     private final LexerBuffer lexerBuffer;
@@ -28,7 +27,7 @@ public class Lexer {
     private String tokenValueString;
 
     public Lexer(Path path, LexerLogger logger) throws IOException {
-        this.reader = Files.newBufferedReader(path, StandardCharsets.US_ASCII);
+        BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.US_ASCII);
         this.logger = logger;
         lexerBuffer = new LexerBuffer(reader);
         tokenFactory = new TokenFactory(logger, lexerBuffer);
@@ -103,7 +102,6 @@ public class Lexer {
                         //char and string
                     else if (currentChar == '\'') setState(TokenState.CHAR_S);
                     else if (currentChar == '\"') setState(TokenState.STRING_S);
-
                     else setState(TokenState.ERROR);
                 }
                 break;
@@ -314,9 +312,8 @@ public class Lexer {
                 //char
                 case CHAR_S: {
                     if (currentChar == '\\') setState(TokenState.CHAR_MULTI_S);
-                    else if (currentChar == '\'') setState(TokenState.ERROR);
-                        // not correct? how about ascii 32 to 126?
-                    else setState(TokenState.CHAR_SINGLE);
+                    else if (isValidChar(currentChar)) setState(TokenState.CHAR_SINGLE);
+                    else setState(TokenState.ERROR);
                 }
                 break;
                 case CHAR_SINGLE: {
@@ -325,8 +322,8 @@ public class Lexer {
                 }
                 break;
                 case CHAR_MULTI_S: {
-                    if (currentChar == '\'') setState(TokenState.ERROR);
-                    else setState(TokenState.CHAR_MULTI_E);
+                    if (isValidChar(currentChar)) setState(TokenState.CHAR_MULTI_E);
+                    else setState(TokenState.ERROR);
                 }
                 break;
                 case CHAR_MULTI_E: {
@@ -343,26 +340,30 @@ public class Lexer {
                     if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
                     else if (currentChar == '"') setState(TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
-                    else setState(TokenState.STRING_SINGLE);
+                    else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
+                    else setState(TokenState.ERROR);
                 }
                 break;
                 case STRING_SINGLE: {
                     if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
                     else if (currentChar == '"') setState(TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
-                    else setState(TokenState.STRING_SINGLE);
+                    else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
+                    else setState(TokenState.ERROR);
                 }
                 break;
                 case STRING_MULTI_S: {
                     if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
-                    else setState(TokenState.STRING_MULTI_E);
+                    else if (isValidChar(currentChar)) setState(TokenState.STRING_MULTI_E);
+                    else setState(TokenState.ERROR);
                 }
                 break;
                 case STRING_MULTI_E: {
                     if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
                     else if (currentChar == '"') setState(TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
-                    else setState(TokenState.STRING_SINGLE);
+                    else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
+                    else setState(TokenState.ERROR);
                 }
                 break;
                 case STRING_E: {

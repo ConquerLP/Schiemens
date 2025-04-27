@@ -79,4 +79,8 @@ public class LexerAtomics {
         return alphaNum.contains(character);
     }
 
+    public static boolean isValidChar(char character) {
+        return character >= 0 && character <= 127;
+    }
+
 }

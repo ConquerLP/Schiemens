@@ -2,7 +2,7 @@ package ch.schiemens.frontend.lexer.token;
 
 public enum TokenType {
 
-    IDENTIFIER("identifier"), EOF("EOF"),
+    IDENTIFIER("identifier"), EOF("EOF"), INVALID("invalid token"),
     L_STRING("literal string"), L_CHAR("literal char"), L_INT("literal int"), L_DOUBLE("literal double"),
     L_HEX("literal hex"), L_OCTAL("literal octal"), L_BINARY("literal binary"),
 
@@ -22,7 +22,7 @@ public enum TokenType {
     S_INC("++"), S_DEC("--"),
     S_LPAREN("("), S_RPAREN(")"), S_LBRACE("{"), S_RBRACE("}"), S_LBRACKET("["), S_RBRACKET("]"),
     S_SEMICOLON(";"), S_COMMA(","), S_DOT("."),
-    INLINE_COMMENT("//"), MULTI_LINE_COMMENT("/**/");
+    INLINE_COMMENT("inline comment"), MULTI_LINE_COMMENT("multiline comment");
 
     private final String name;
 
