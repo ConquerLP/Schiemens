@@ -21,7 +21,7 @@ public abstract class BaseLogger {
     private int errorCount = 0;
 
     public enum LogLevel {
-        INFO("[INFO]"), WARNING("[WARNING]"), ERROR("[ERROR]");
+        INFO("[INFO]: "), WARNING("[WARNING]: "), ERROR("[ERROR]: ");
         private final String prefix;
 
         LogLevel(String prefix) {
@@ -85,17 +85,25 @@ public abstract class BaseLogger {
         }
     }
 
+    public void close() {
+        try {
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to close log file: " + logFilePath, e);
+        }
+    }
+
     public void logInfo(String message) {
-        writeLine("[INFO]: " + message);
+        writeLine(LogLevel.INFO + message);
     }
 
     public void logWarning(String message) {
-        writeLine("[WARNING]: " + message);
+        writeLine(LogLevel.WARNING + message);
         warningCount++;
     }
 
     public void logError(String message) {
-        writeLine("[ERROR]: " + message);
+        writeLine(LogLevel.ERROR + message);
         errorCount++;
     }
 

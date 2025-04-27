@@ -108,9 +108,9 @@ public class TokenFactory {
     private Token makeToken(TokenType type, String value) {
         Token token = new Token(type, value, lexerBuffer.makePositionInFile(value));
         if(type == TokenType.INVALID) {
-            //logger.logError("Created an invalid token: ", token);
+            logger.logError("Created an invalid token: " + token);
         } else {
-            //logger.logInfo("Created Token: " + token);
+            logger.logInfo("Created Token: " + token);
         }
         return token;
     }

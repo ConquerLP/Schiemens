@@ -2,9 +2,9 @@ package ch.schiemens.util;
 
 public class PositionInFile {
 
-    private int line;
-    private int columnStart;
-    private int columnEnd;
+    private final int line;
+    private final int columnStart;
+    private final int columnEnd;
 
     public PositionInFile(int line, int columnEnd, String value) {
         this.line = line;

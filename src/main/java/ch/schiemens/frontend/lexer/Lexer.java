@@ -17,7 +17,6 @@ import static ch.schiemens.frontend.lexer.LexerAtomics.*;
 public class Lexer {
 
     private final LexerLogger logger;
-
     private final LexerBuffer lexerBuffer;
     private final StringBuilder tokenValue = new StringBuilder();
     private final TokenFactory tokenFactory;
@@ -106,7 +105,7 @@ public class Lexer {
                 }
                 break;
                 case ERROR: {
-                    //logger.logError("Lexical error: " + inputChar + new PositionInFile(lineNumber, columnNumber, value.toString()));
+                    logger.logError("Invalid token: " + tokenValue);
                 }
                 break;
                 case CREATE: {
@@ -134,7 +133,7 @@ public class Lexer {
                 break;
                 case OCTAL_E: {
                     if (isOctal(currentChar)) setState(TokenState.OCTAL_E);
-                    else setState(TokenState.CREATE);
+                    else setState(TokenState.CREATE_B);
                 }
                 break;
                 case HEX_S: {
@@ -144,7 +143,7 @@ public class Lexer {
                 break;
                 case HEX_E: {
                     if (isHexadecimal(currentChar)) setState(TokenState.HEX_E);
-                    else setState(TokenState.CREATE);
+                    else setState(TokenState.CREATE_B);
                 }
                 break;
                 case BINARY_S: {
