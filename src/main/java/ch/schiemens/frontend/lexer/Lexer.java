@@ -60,18 +60,28 @@ public class Lexer {
         tokenValue.append(currentChar);
     }
 
+    private void handleInvalidEOFInState(TokenState state) {
+        logger.logError("Unexpected EOF in state: " + state);
+        setState(TokenState.EOF);
+    }
+
+    private boolean checkEOF(TokenState state, char currentChar) {
+        if(currentChar == 0) {
+            handleInvalidEOFInState(state);
+            return true;
+        }
+        else return false;
+    }
+
     public Token nextToken() throws IOException, LexicalException {
         initTokenState();
         Token token = null;
-        do {
-            if (lexerBuffer.isEOF()) {
-                token = new Token(TokenType.EOF, lexerBuffer.makePositionInFile());
-                break;
-            }
-            currentChar = (char) lexerBuffer.consume();
+        currentChar = (char) lexerBuffer.consume();
+        while(token == null) {
             switch (currentTokenState) {
                 case START: {
-                    if (isWhitespace(currentChar)) setState(TokenState.START);
+                    if (lexerBuffer.isEOF()) setState(TokenState.EOF);
+                    else if (isWhitespace(currentChar)) setState(TokenState.START);
                     else if (currentChar == '0') setState(TokenState.NUM_INT);
                     else if (isDecimal(currentChar)) setState(TokenState.INT);
                     else if (isIdentifierStart(currentChar)) setState(TokenState.IDENTIFIER);
@@ -106,6 +116,7 @@ public class Lexer {
                 break;
                 case ERROR: {
                     logger.logError("Invalid token: " + tokenValue);
+                    setState(TokenState.START);
                 }
                 break;
                 case CREATE: {
@@ -174,39 +185,39 @@ public class Lexer {
                 break;
                 //single character symbols
                 case S_PAREN_START: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_PAREN_END: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_ARRAY_START: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_ARRAY_END: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_CURLY_BRACKET_START: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_CURLY_BRACKET_END: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_DOT: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_SEMI: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_COMMA: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 //multiple character symbols
@@ -251,7 +262,7 @@ public class Lexer {
                 }
                 break;
                 case S_EXPO_MUL_EQ: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_GT: {
@@ -260,7 +271,7 @@ public class Lexer {
                 }
                 break;
                 case S_GT_EQ: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_LT: {
@@ -269,7 +280,7 @@ public class Lexer {
                 }
                 break;
                 case S_LT_EQ: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_NOT: {
@@ -278,7 +289,7 @@ public class Lexer {
                 }
                 break;
                 case S_NOT_EQ: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_OR_S: {
@@ -287,7 +298,7 @@ public class Lexer {
                 }
                 break;
                 case S_OR_E: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_AND_S: {
@@ -296,7 +307,7 @@ public class Lexer {
                 }
                 break;
                 case S_AND_E: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 case S_EQ: {
@@ -305,12 +316,13 @@ public class Lexer {
                 }
                 break;
                 case S_EQ_EQ: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 //char
                 case CHAR_S: {
-                    if (currentChar == '\\') setState(TokenState.CHAR_MULTI_S);
+                    if(checkEOF(TokenState.CHAR_S, currentChar));
+                    else if (currentChar == '\\') setState(TokenState.CHAR_MULTI_S);
                     else if (isValidChar(currentChar)) setState(TokenState.CHAR_SINGLE);
                     else setState(TokenState.ERROR);
                 }
@@ -331,7 +343,7 @@ public class Lexer {
                 }
                 break;
                 case CHAR_E: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 //string
@@ -366,7 +378,7 @@ public class Lexer {
                 }
                 break;
                 case STRING_E: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
                 }
                 break;
                 //identifier and keywords
@@ -393,11 +405,16 @@ public class Lexer {
                 }
                 break;
                 case MULTI_LINE_COMMENT_E: {
-                    setState(TokenState.CREATE_B);
+                    setState(TokenState.CREATE);
+                }
+                break;
+                case EOF: {
+                    setState(TokenState.CREATE);
                 }
                 break;
             }
-        } while (token == null);
+            currentChar = (char) lexerBuffer.consume();
+        }
         return token;
     }
 

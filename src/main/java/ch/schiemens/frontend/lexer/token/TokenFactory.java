@@ -101,6 +101,7 @@ public class TokenFactory {
             case S_INLINE_COMMENT -> makeToken(TokenType.INLINE_COMMENT, value);
             case MULTI_LINE_COMMENT_E -> makeToken(TokenType.MULTI_LINE_COMMENT, value);
             case IDENTIFIER -> makeToken(keywords.getOrDefault(value, TokenType.IDENTIFIER), value);
+            case EOF -> makeToken(TokenType.EOF, value);
             default -> makeToken(TokenType.INVALID, value);
         };
     }
