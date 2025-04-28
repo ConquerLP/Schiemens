@@ -98,10 +98,10 @@ public class TokenFactory {
             case S_EQ_EQ -> makeToken(TokenType.S_EQ, value);
             case CHAR_E -> makeToken(TokenType.L_CHAR, value);
             case STRING_E -> makeToken(TokenType.L_STRING, value);
-            case S_INLINE_COMMENT -> makeToken(TokenType.INLINE_COMMENT, value);
-            case MULTI_LINE_COMMENT_E -> makeToken(TokenType.MULTI_LINE_COMMENT, value);
+            case S_INLINE_COMMENT -> makeToken(TokenType.INLINE_COMMENT, "");
+            case MULTI_LINE_COMMENT_E -> makeToken(TokenType.MULTI_LINE_COMMENT, "");
             case IDENTIFIER -> makeToken(keywords.getOrDefault(value, TokenType.IDENTIFIER), value);
-            case EOF -> makeToken(TokenType.EOF, value);
+            case EOF -> makeToken(TokenType.EOF, "");
             default -> makeToken(TokenType.INVALID, value);
         };
     }

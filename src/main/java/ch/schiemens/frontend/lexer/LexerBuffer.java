@@ -65,16 +65,8 @@ public class LexerBuffer {
         canGoBack = false;
     }
 
-    public boolean isEOF() throws IOException {
-        if (current != -2) {
-            return current == -1;
-        }
-        reader.mark(1);
-        int c = reader.read();
-        if (c != -1) {
-            reader.reset();
-        }
-        return c == -1;
+    public static boolean isEOF(int current) {
+        return current == -1;
     }
 
     public PositionInFile makePositionInFile() {

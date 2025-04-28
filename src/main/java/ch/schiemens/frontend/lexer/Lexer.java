@@ -3,7 +3,6 @@ package ch.schiemens.frontend.lexer;
 import ch.schiemens.exception.LexicalException;
 import ch.schiemens.frontend.lexer.token.Token;
 import ch.schiemens.frontend.lexer.token.TokenFactory;
-import ch.schiemens.frontend.lexer.token.TokenType;
 import ch.schiemens.logger.frontend.compilationEngine.LexerLogger;
 
 import java.io.BufferedReader;
@@ -21,6 +20,7 @@ public class Lexer {
     private final StringBuilder tokenValue = new StringBuilder();
     private final TokenFactory tokenFactory;
     private char currentChar;
+    private int currentInt;
     private TokenState currentTokenState;
     private TokenState oldTokenState;
     private String tokenValueString;
@@ -37,6 +37,7 @@ public class Lexer {
         currentTokenState = TokenState.START;
         oldTokenState = TokenState.START;
         currentChar = '\0';
+        currentInt = 0;
         tokenValueString = "";
     }
 
@@ -65,22 +66,22 @@ public class Lexer {
         setState(TokenState.EOF);
     }
 
-    private boolean checkEOF(TokenState state, char currentChar) {
-        if(currentChar == 0) {
+    private boolean checkEOF(TokenState state, int currentInt) {
+        if (LexerBuffer.isEOF(currentInt)) {
             handleInvalidEOFInState(state);
             return true;
-        }
-        else return false;
+        } else return false;
     }
 
     public Token nextToken() throws IOException, LexicalException {
         initTokenState();
         Token token = null;
-        currentChar = (char) lexerBuffer.consume();
-        while(token == null) {
+        currentInt = lexerBuffer.consume();
+        currentChar = (char) currentInt;
+        while (token == null) {
             switch (currentTokenState) {
                 case START: {
-                    if (lexerBuffer.isEOF()) setState(TokenState.EOF);
+                    if (LexerBuffer.isEOF(currentInt)) setState(TokenState.EOF);
                     else if (isWhitespace(currentChar)) setState(TokenState.START);
                     else if (currentChar == '0') setState(TokenState.NUM_INT);
                     else if (isDecimal(currentChar)) setState(TokenState.INT);
@@ -321,24 +322,27 @@ public class Lexer {
                 break;
                 //char
                 case CHAR_S: {
-                    if(checkEOF(TokenState.CHAR_S, currentChar));
+                    if (checkEOF(TokenState.CHAR_S, currentInt)) break;
                     else if (currentChar == '\\') setState(TokenState.CHAR_MULTI_S);
                     else if (isValidChar(currentChar)) setState(TokenState.CHAR_SINGLE);
                     else setState(TokenState.ERROR);
                 }
                 break;
                 case CHAR_SINGLE: {
-                    if (currentChar == '\'') setState(TokenState.CHAR_E);
+                    if (checkEOF(TokenState.CHAR_SINGLE, currentInt)) break;
+                    else if (currentChar == '\'') setState(TokenState.CHAR_E);
                     else setState(TokenState.ERROR);
                 }
                 break;
                 case CHAR_MULTI_S: {
-                    if (isValidChar(currentChar)) setState(TokenState.CHAR_MULTI_E);
+                    if (checkEOF(TokenState.CHAR_MULTI_S, currentInt)) break;
+                    else if (isValidChar(currentChar)) setState(TokenState.CHAR_MULTI_E);
                     else setState(TokenState.ERROR);
                 }
                 break;
                 case CHAR_MULTI_E: {
-                    if (currentChar == '\'') setState(TokenState.CHAR_MULTI_E);
+                    if (checkEOF(TokenState.CHAR_MULTI_E, currentInt)) break;
+                    else if (currentChar == '\'') setState(TokenState.CHAR_MULTI_E);
                     else setState(TokenState.ERROR);
                 }
                 break;
@@ -348,7 +352,8 @@ public class Lexer {
                 break;
                 //string
                 case STRING_S: {
-                    if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
+                    if (checkEOF(TokenState.STRING_S, currentInt)) break;
+                    else if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
                     else if (currentChar == '"') setState(TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
                     else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
@@ -356,7 +361,8 @@ public class Lexer {
                 }
                 break;
                 case STRING_SINGLE: {
-                    if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
+                    if (checkEOF(TokenState.STRING_SINGLE, currentInt)) break;
+                    else if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
                     else if (currentChar == '"') setState(TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
                     else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
@@ -364,13 +370,15 @@ public class Lexer {
                 }
                 break;
                 case STRING_MULTI_S: {
-                    if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
+                    if (checkEOF(TokenState.STRING_MULTI_S, currentInt)) break;
+                    else if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
                     else if (isValidChar(currentChar)) setState(TokenState.STRING_MULTI_E);
                     else setState(TokenState.ERROR);
                 }
                 break;
                 case STRING_MULTI_E: {
-                    if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
+                    if (checkEOF(TokenState.STRING_MULTI_E, currentInt)) break;
+                    else if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
                     else if (currentChar == '"') setState(TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
                     else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
@@ -389,18 +397,20 @@ public class Lexer {
                 break;
                 //inline comment
                 case S_INLINE_COMMENT: {
-                    if (isCarriageReturn(currentChar)) setState(TokenState.CREATE_B);
+                    if (isCarriageReturn(currentChar) || LexerBuffer.isEOF(currentInt)) setState(TokenState.CREATE_B);
                     else setState(TokenState.S_INLINE_COMMENT);
                 }
                 break;
                 //multiline comment
                 case MULTI_LINE_COMMENT_S: {
-                    if (currentChar == '*') setState(TokenState.MULTI_LINE_COMMENT_S1);
+                    if (checkEOF(TokenState.MULTI_LINE_COMMENT_S, currentInt)) break;
+                    else if (currentChar == '*') setState(TokenState.MULTI_LINE_COMMENT_S1);
                     else setState(TokenState.MULTI_LINE_COMMENT_S);
                 }
                 break;
                 case MULTI_LINE_COMMENT_S1: {
-                    if (currentChar == '/') setState(TokenState.MULTI_LINE_COMMENT_E);
+                    if (checkEOF(TokenState.MULTI_LINE_COMMENT_S1, currentInt)) break;
+                    else if (currentChar == '/') setState(TokenState.MULTI_LINE_COMMENT_E);
                     else setState(TokenState.MULTI_LINE_COMMENT_S);
                 }
                 break;
@@ -413,7 +423,9 @@ public class Lexer {
                 }
                 break;
             }
-            currentChar = (char) lexerBuffer.consume();
+            System.out.println(currentChar);
+            currentInt = lexerBuffer.consume();
+            currentChar = (char) currentInt;
         }
         return token;
     }

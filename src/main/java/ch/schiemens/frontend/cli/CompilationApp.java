@@ -29,8 +29,8 @@ public class CompilationApp {
         }
         */
 
-        //Path sourcePath = Path.of("D:\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
-        Path sourcePath = Path.of("C:\\Users\\Stefan\\Desktop\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
+        Path sourcePath = Path.of("D:\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
+        //Path sourcePath = Path.of("C:\\Users\\Stefan\\Desktop\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
         LexerLogger logger = new LexerLogger(sourcePath);
         try {
             Lexer lexer = new Lexer(sourcePath, logger);
