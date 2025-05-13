@@ -26,14 +26,5 @@ public class ASTLogger extends BaseLogger {
 
     }
 
-    @Override
-    public void logDebug(String message) {
-
-    }
-
-    @Override
-    public void logFatal(String message) {
-
-    }
 
 }

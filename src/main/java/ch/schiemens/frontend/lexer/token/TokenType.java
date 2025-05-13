@@ -2,9 +2,9 @@ package ch.schiemens.frontend.lexer.token;
 
 public enum TokenType {
 
-    IDENTIFIER("identifier"), EOF("eof"),
+    IDENTIFIER("identifier"), EOF("EOF"), INVALID("invalid token"),
     L_STRING("literal string"), L_CHAR("literal char"), L_INT("literal int"), L_DOUBLE("literal double"),
-    L_BOOLEAN("literal boolean"), L_HEX("literal hex"), L_OCTAL("literal octal"), L_BINARY("literal binary"),
+    L_HEX("literal hex"), L_OCTAL("literal octal"), L_BINARY("literal binary"),
 
     K_CLASS("class"), K_VOID("void"), K_FUNCTION("func"), K_GLOBAL("global"),
     K_FINAL("final"), K_STATIC("static"),
@@ -17,11 +17,12 @@ public enum TokenType {
 
     S_EQ("=="), S_NEQ("!="), S_LEQ("<="), S_GEQ(">="), S_LT("<"), S_GT(">"),
     S_PLUS("+"), S_MINUS("-"), S_MULT("*"), S_DIV("/"), S_MOD("%"), S_EXP("^"), S_EXP_ALT("**"),
-    S_ASSIGN("="), S_ADD_ASSIGN("+="), S_SUB_ASSIGN("-="), S_MULT_ASSIGN("*="),S_DIV_ASSIGN("/="), S_MOD_ASSIGN("%="),
+    S_ASSIGN("="), S_ADD_ASSIGN("+="), S_SUB_ASSIGN("-="), S_MULT_ASSIGN("*="), S_DIV_ASSIGN("/="), S_MOD_ASSIGN("%="),
     S_EXP_ASSIGN("^="), S_EXP_ALT_ASSIGN("**="),
     S_INC("++"), S_DEC("--"),
     S_LPAREN("("), S_RPAREN(")"), S_LBRACE("{"), S_RBRACE("}"), S_LBRACKET("["), S_RBRACKET("]"),
-    S_SEMICOLON(";"), S_COMMA(","), S_DOT(".");
+    S_SEMICOLON(";"), S_COMMA(","), S_DOT("."),
+    INLINE_COMMENT("inline comment"), MULTI_LINE_COMMENT("multiline comment");
 
     private final String name;
 

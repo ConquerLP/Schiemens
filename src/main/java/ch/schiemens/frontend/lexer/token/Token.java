@@ -14,6 +14,12 @@ public class Token {
         this.position = position;
     }
 
+    public Token(TokenType type, PositionInFile position) {
+        this.type = type;
+        this.value = "";
+        this.position = position;
+    }
+
     public TokenType getType() {
         return type;
     }

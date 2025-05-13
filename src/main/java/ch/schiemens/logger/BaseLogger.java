@@ -5,10 +5,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseLogger {
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
 
     private final Path sourcePath;
     private final Path logFilePath;
@@ -17,7 +21,7 @@ public abstract class BaseLogger {
     private int errorCount = 0;
 
     public enum LogLevel {
-        INFO("[INFO]"), WARNING("[WARNING]"), ERROR("[ERROR]");
+        INFO("[INFO]: "), WARNING("[WARNING]: "), ERROR("[ERROR]: ");
         private final String prefix;
 
         LogLevel(String prefix) {
@@ -63,8 +67,9 @@ public abstract class BaseLogger {
     }
 
     private void writeLine(String line) {
+        String timestamp = LocalDateTime.now().format(DATE_FORMAT);
         try {
-            writer.write(line);
+            writer.write("[" + timestamp + "] " + line);
             writer.newLine();
         } catch (IOException e) {
             throw new RuntimeException("Failed to write to log file: " + logFilePath, e);
@@ -80,17 +85,25 @@ public abstract class BaseLogger {
         }
     }
 
+    public void close() {
+        try {
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to close log file: " + logFilePath, e);
+        }
+    }
+
     public void logInfo(String message) {
-        writeLine("[INFO]: " + message);
+        writeLine(LogLevel.INFO + message);
     }
 
     public void logWarning(String message) {
-        writeLine("[WARNING]: " + message);
+        writeLine(LogLevel.WARNING + message);
         warningCount++;
     }
 
     public void logError(String message) {
-        writeLine("[ERROR]: " + message);
+        writeLine(LogLevel.ERROR + message);
         errorCount++;
     }
 
