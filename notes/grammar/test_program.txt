@@ -1,0 +1,19 @@
+public:
+func void main() {}
+class Test {}
+label here {}
+enum Test {a, b = 4};
+global int.[] a = {1};
+
+
+namespace Math {
+    class BaseVector {
+        protected member double.[] values;
+        public meth double.[] getValues() {
+            return values;
+        }
+    }
+}
+
+
+

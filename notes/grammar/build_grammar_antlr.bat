@@ -5,4 +5,8 @@ del *.interp
 del *.tokens
 del *.log
 
-antlr4 -Dlanguage=Java Schiemens.g4
+
+set LOCATION=antlr-4.13.2.jar
+java -jar %LOCATION% -Dlanguage=Java -Xlog -o gen Schiemens.g4
+
+pause

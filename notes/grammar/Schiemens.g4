@@ -1,25 +1,30 @@
 grammar Schiemens;
 
-compilationunit: namespace EOF ;
+compilationunit: PUBLIC1 programList programroot EOF ;
+programroot: PUBLIC1 programList
+    | namespaceList ;
+
 program: classdec
 	| func
 	| label
 	| enums
 	| global ;
-programtail: program programtail
+programList: program programList
 	| /* EPSILON */ ;
-namespace: NAMESPACE ID '{' programtail '}'
-    | programtail ;
-
+namespace: NAMESPACE ID '{' programList '}' ;
+namespaceList: namespace namespaceList
+	| /* EPSILON */ ;
 label: LABEL ID smtblock ;
 enums: ENUM ID '{' enuminsideList '}' SEMI ;
-enuminsideList: enuminside ',' enuminsideList
+enuminsideList: enuminside enuminsideListTail
+    | /* EPSILON */ ;
+enuminsideListTail: ',' enuminside enuminsideListTail
     | /* EPSILON */ ;
 enuminside: ID enuminsideTail ;
 enuminsideTail: '=' constant
     | /* EPSILON */ ;
 
-global: GLOBAL typedesc '=' globalTail ;
+global: GLOBAL typedesc '=' globalTail SEMI ;
 globalTail: constant
     | constlist ;
 
@@ -36,7 +41,7 @@ classvisibility: PUBLIC
     | PROTECTED
     | PRIVATE ;
 method: METH rtype ID fparam smtblock ;
-member: MEMBER typemodifier type ID SEMI ;
+member: MEMBER typemodifier typedesc SEMI ;
 classconstr: CONSTR fparam smtblock ;
 typemodifier: STATIC
     | FINAL
@@ -270,6 +275,7 @@ STATIC: 'static' ;
 FINAL: 'final' ;
 NAMESPACE: 'namespace' ;
 NAMESPACE1: '@' ;
+PUBLIC1: 'public:' ;
 
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 COMMENT: '//' ~[\r\n]* -> skip;
