@@ -1,8 +1,10 @@
 grammar Schiemens;
 
-compilationunit: PUBLIC1 programList programroot EOF ;
-programroot: PUBLIC1 programList
-    | namespaceList ;
+compilationunit: topLevelUnitList EOF ;
+topLevelUnitList: topLevelUnit topLevelUnitList
+    | /* EPSILON */ ;
+topLevelUnit: program
+    | namespace ;
 
 program: classdec
 	| func
@@ -12,8 +14,7 @@ program: classdec
 programList: program programList
 	| /* EPSILON */ ;
 namespace: NAMESPACE ID '{' programList '}' ;
-namespaceList: namespace namespaceList
-	| /* EPSILON */ ;
+
 label: LABEL ID smtblock ;
 enums: ENUM ID '{' enuminsideList '}' SEMI ;
 enuminsideList: enuminside enuminsideListTail
@@ -50,10 +51,10 @@ typemodifier: STATIC
 func: FUNC rtype ID fparam smtblock ;
 fparam: '(' arglist ')' ;
 arglist: typedesc typedesctail
-	| /* EPSILON */ ;
+       | /* EPSILON */ ;
+typedesctail: ',' typedesc typedesctail
+            | /* EPSILON */ ;
 typedesc: namespaceAcces type farraytail ID ;
-typedesctail: ',' typedesc
-	| /* EPSILON */ ;
 type: 'int'
 	| 'double'
 	| 'char'
@@ -79,6 +80,7 @@ smt: assignsmt SEMI
 	| switchsmt
 	| fcall SEMI
 	| methcall SEMI
+	| supercall SEMI
 	| vardec SEMI
 	| jumpstmt SEMI
 	| enums ;
@@ -111,8 +113,11 @@ smtblock: '{' smtlist '}' ;
 assignsmt: variable assignop expr ;
 vardec: VAR vardecComma vardecCommaTail ;
 vardecComma: typemodifier typedesc vardecTail ;
-vardecCommaTail: ',' vardecComma vardecCommaTail
+vardecCommaTail: vardecComma vardecCommaTailRest
     | /* EPSILON */ ;
+vardecCommaTailRest: ',' vardecComma vardecCommaTailRest
+    | /* EPSILON */ ;
+
 vardecTail: '=' vardecTailP
     | /* EPSILON */ ;
 vardecTailP: expr
@@ -136,10 +141,9 @@ namespaceAcces: NAMESPACE1 '::' ID
 idnest: '.' ID index ;
 idnestTail: idnest idnestTail
 	| /* EPSILON */ ;
-
 index: '[' expr ']'
 	| /* EPSILON */ ;
-
+supercall: SUPER fcallheader ;
 fargs: expr fargstail
 	| /* EPSILON */ ;
 fargstail: ',' expr fargstail
@@ -275,7 +279,7 @@ STATIC: 'static' ;
 FINAL: 'final' ;
 NAMESPACE: 'namespace' ;
 NAMESPACE1: '@' ;
-PUBLIC1: 'public:' ;
+SUPER: 'super' ;
 
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 COMMENT: '//' ~[\r\n]* -> skip;

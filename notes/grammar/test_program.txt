@@ -1,19 +1,72 @@
-public:
 func void main() {}
-class Test {}
-label here {}
-enum Test {a, b = 4};
-global int.[] a = {1};
+enum Color {
+    blue = 0, red, green
+};
+label jumpHere {}
 
 
 namespace Math {
+    global double pie = 3.141592654;
+
     class BaseVector {
         protected member double.[] values;
-        public meth double.[] getValues() {
-            return values;
+        public constr(int size) {
+            this.values = cast(double) new Double()[size];
+        }
+    }
+
+    class Vec2D extends BaseVector {
+        public constr(double x, double y) {
+            super(2);
+            values[0] = x;
+            values[1] = y;
+        }
+        private meth Vec2D add(Vec2D other) {
+            return new Vec2D(this.x + other.x, this.y + other.y);
+        }
+    }
+
+    func int add(int a, int b) {
+        return a + b;
+    }
+
+    func int div(int a, int b) {
+        if(b == 0) {home;}
+        else {
+            return a / b;
+        }
+    }
+
+}
+
+class List {
+
+    private member Node start;
+    private member int size;
+
+    public constr() {
+        start = null;
+        size = 0;
+    }
+
+    public meth Object get(int n) {
+        var Node tmp = start;
+        var int i = 0;
+        while(tmp != null) {
+            tmp = m->tmp:getNext();
+            i += 1;
+        }
+        if(i < n) {return null;}
+        else {
+            return m->tmp:get();
         }
     }
 }
 
+class Node {
 
+    private member Node next;
+    private member Node prev;
+    private member Object obj;
 
+}
