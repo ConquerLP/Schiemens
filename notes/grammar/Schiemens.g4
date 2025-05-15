@@ -1,33 +1,30 @@
 grammar Schiemens;
 
+///////////////////////////////////////////////////
+// root of the program
+///////////////////////////////////////////////////
+
 compilationunit: topLevelUnitList EOF ;
 topLevelUnitList: topLevelUnit topLevelUnitList
     | /* EPSILON */ ;
-topLevelUnit: program
-    | namespace ;
-
+topLevelUnit: program ;
 program: classdec
 	| func
 	| label
-	| enums
 	| global ;
-programList: program programList
-	| /* EPSILON */ ;
-namespace: NAMESPACE ID '{' programList '}' ;
+
+///////////////////////////////////////////////////
+// global variables and labels
+///////////////////////////////////////////////////
 
 label: LABEL ID smtblock ;
-enums: ENUM ID '{' enuminsideList '}' SEMI ;
-enuminsideList: enuminside enuminsideListTail
-    | /* EPSILON */ ;
-enuminsideListTail: ',' enuminside enuminsideListTail
-    | /* EPSILON */ ;
-enuminside: ID enuminsideTail ;
-enuminsideTail: '=' constant
-    | /* EPSILON */ ;
-
 global: GLOBAL typedesc '=' globalTail SEMI ;
 globalTail: constant
     | constlist ;
+
+///////////////////////////////////////////////////
+// class description
+///////////////////////////////////////////////////
 
 classdec: CLASS ID classpoly classbody ;
 classpoly: EXTENDS ID
@@ -48,13 +45,22 @@ typemodifier: STATIC
     | FINAL
     | /* EPSILON */ ;
 
+///////////////////////////////////////////////////
+// general function description
+///////////////////////////////////////////////////
+
 func: FUNC rtype ID fparam smtblock ;
 fparam: '(' arglist ')' ;
 arglist: typedesc typedesctail
        | /* EPSILON */ ;
+
+///////////////////////////////////////////////////
+// datatype descriptions
+///////////////////////////////////////////////////
+
 typedesctail: ',' typedesc typedesctail
             | /* EPSILON */ ;
-typedesc: namespaceAcces type farraytail ID ;
+typedesc: type farraytail ID ;
 type: 'int'
 	| 'double'
 	| 'char'
@@ -70,6 +76,11 @@ farraytail: farray farraytail
 	| /* EPSILON */ ;
 farray: '[' INT_LIT ']'
 	| '.' '[' ']' ;
+
+///////////////////////////////////////////////////
+// statements
+///////////////////////////////////////////////////
+
 smtlist: smt smtlist
 	| /* EPSILON */ ;
 smt: assignsmt SEMI
@@ -82,20 +93,19 @@ smt: assignsmt SEMI
 	| methcall SEMI
 	| supercall SEMI
 	| vardec SEMI
-	| jumpstmt SEMI
-	| enums ;
+	| jumpstmt SEMI ;
 ifsmt: IF check smtblock elsepart ;
 elsepart: ELSE smtblock
 	| /* EPSILON */ ;
 whilesmt: WHILE check smtblock ;
 dowhilesmt: DO smtblock WHILE check ;
-forsmt: FOR '(' forstart SEMI formiddle SEMI forend SEMI ')' smtblock ;
+forsmt: FOR '(' forstart SEMI formiddle SEMI forend ')' smtblock ;
 forstart: vardec
 	| assignsmt
 	| /* EPSILON */ ;
 formiddle: expr
     | /* EPSILON */ ;
-forend: assignsmt
+forend: assignsmt SEMI
     | /* EPSILON */ ;
 switchsmt: SWITCH check '{' caseinside caseinsidelist '}' ;
 caseinside: CASE constant ':' smtblock
@@ -110,7 +120,13 @@ jumpstmt: CONTINUE
 check: '(' expr ')' ;
 smtblock: '{' smtlist '}' ;
 
-assignsmt: variable assignop expr ;
+///////////////////////////////////////////////////
+// variable access and assignments
+///////////////////////////////////////////////////
+
+assignsmt: variable assignsmtTail ;
+assignsmtTail: assignop expr
+    | postop ;
 vardec: VAR vardecComma vardecCommaTail ;
 vardecComma: typemodifier typedesc vardecTail ;
 vardecCommaTail: vardecComma vardecCommaTailRest
@@ -122,12 +138,38 @@ vardecTail: '=' vardecTailP
     | /* EPSILON */ ;
 vardecTailP: expr
 	| list ;
-variable: namespaceAcces variableTail
+variable: variableTail
     | THIS index idnestTail ;
-variableTail: ID index idnestTail
-    | ENUM1 ':' ID '.' ID ;
-namespaceAcces: NAMESPACE1 '::' ID
+variableTail: ID index idnestTail ;
+idnest: '.' ID index ;
+idnestTail: idnest idnestTail
 	| /* EPSILON */ ;
+index: '[' expr ']'
+	| /* EPSILON */ ;
+
+///////////////////////////////////////////////////
+// function, method, super and new - class
+///////////////////////////////////////////////////
+
+supercall: SUPER fcallheader ;
+fargs: expr fargstail
+	| /* EPSILON */ ;
+fargstail: ',' expr fargstail
+	| /* EPSILON */ ;
+fcall: FC  ID fcallheader fcallTail ;
+methcall: MC ID index mathcallend ;
+methcallTail: idnest
+	| ':' ID fcallheader ;
+mathcallend: methcallTail mathcallend
+	| /* EPSILON */ ;
+
+fcallheader: '(' fargs ')' ;
+newobj: NEW  ID fcallheader fcallTail ;
+fcallTail: index mathcallend ;
+
+///////////////////////////////////////////////////
+// expressions
+///////////////////////////////////////////////////
 
 //A -> Aa | b
 // <=>
@@ -137,27 +179,6 @@ namespaceAcces: NAMESPACE1 '::' ID
 // <=>
 // E -> TE'
 // E' -> +TE'
-
-idnest: '.' ID index ;
-idnestTail: idnest idnestTail
-	| /* EPSILON */ ;
-index: '[' expr ']'
-	| /* EPSILON */ ;
-supercall: SUPER fcallheader ;
-fargs: expr fargstail
-	| /* EPSILON */ ;
-fargstail: ',' expr fargstail
-	| /* EPSILON */ ;
-fcall: FC namespaceAcces ID fcallheader fcallTail ;
-methcall: MC ID index mathcallend ;
-methcallTail: idnest
-	| ':' ID fcallheader ;
-mathcallend: methcallTail mathcallend
-	| /* EPSILON */ ;
-
-fcallheader: '(' fargs ')' ;
-newobj: NEW namespaceAcces ID fcallheader fcallTail ;
-fcallTail: index mathcallend ;
 
 expr: andexpr exprP ;
 exprP: orop andexpr exprP
@@ -182,14 +203,14 @@ expoexprP: expoop unaryexpr expoexprP
 	| /* EPSILON */ ;
 unaryexpr: preop cast
 	| cast ;
+cast: CAST '(' type ')' primary
+    | primary ;
 primary: variable
 	| fcall
 	| methcall
 	| newobj
 	| '(' expr ')'
 	| constant ;
-cast: CAST '(' type ')' primary
-    | primary ;
 
 constant: INT_LIT
 	| HEX_LIT
@@ -201,6 +222,11 @@ constant: INT_LIT
 	| BOOLEAN_LIT
 	| REF_LIT ;
 
+///////////////////////////////////////////////////
+// expressionlist
+///////////////////////////////////////////////////
+
+
 list: '{' exprMany '}'
 	| '.' '{' list ',' list listTail '}' ;
 listTail: ',' list listTail
@@ -209,13 +235,18 @@ exprMany: expr exprManyTail ;
 exprManyTail: ',' expr exprManyTail
 	| /* EPSILON */ ;
 
+///////////////////////////////////////////////////
+// constantlist
+///////////////////////////////////////////////////
+
 constlist: '{' constexprMany '}'
-    | '.' '{' constlist ',' constlist constlistTail '}' ;
+    | '.' '{' constlist constlistTail '}' ;
 constlistTail: ',' constlist constlistTail
 	| /* EPSILON */ ;
 constexprMany: constant constexprManyTail ;
 constexprManyTail: ',' constant constexprManyTail
 	| /* EPSILON */ ;
+
 ///////////////////////////////////////////////////
 // operators, keywords and symbols
 ///////////////////////////////////////////////////
@@ -240,6 +271,7 @@ addop: '+' | '-' ;
 multop: '*' | '/' | '%' ;
 expoop: '^' | '**' ;
 preop: '!' | 'not' | '-' ;
+postop: '++' | '--' ;
 
 SEMI: ';' ;
 FUNC: 'func' ;
@@ -269,16 +301,12 @@ MC: 'm->' ;
 LABEL: 'label' ;
 GOTO: 'goto' ;
 CAST: 'cast' ;
-ENUM: 'enum' ;
-ENUM1: 'ENUM' ;
 PUBLIC: 'public' ;
 PROTECTED: 'protected' ;
 PRIVATE: 'private' ;
 GLOBAL: 'global' ;
 STATIC: 'static' ;
 FINAL: 'final' ;
-NAMESPACE: 'namespace' ;
-NAMESPACE1: '@' ;
 SUPER: 'super' ;
 
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
