@@ -1,0 +1,228 @@
+
+compilationunit:
+    F(topLevelUnitList)
+->  CLASS, FUNC, LABEL, GLOBAL
+topLevelUnitList:
+    F(topLevelUnit)
+->  CLASS, FUNC, LABEL, GLOBAL
+topLevelUnit:
+    F(program)
+->  CLASS, FUNC, LABEL, GLOBAL
+program:
+    F(classdec, func, label, global)
+->  CLASS, FUNC, LABEL, GLOBAL
+label:
+->  LABEL
+global:
+->  GLOBAL
+globalTail:
+    F(constant, constlist)
+->  int, hex, bin, oct, double, string, char, boolean, ref, {, .
+classdec:
+->  CLASS
+classpoly:
+->  EXTENDS
+classbody:
+->  {
+classinside:
+    F(method, memeber, classconstr)
+->  METH, MEMBER, CONSTR
+classinsidelist:
+    F(classvisibility), epsilon
+classvisibility:
+->  PUBLIC, PROTECTED, PRIVATE
+method:
+->  METH
+member:
+->  MEMBER
+classconstr:
+->  CONSTR
+typemodifier:
+->  STATIC, FINAL, epsilon
+func:
+->  FUNC
+fparam:
+->  (
+arglist:
+    F(typedesc, typedesctail), epsilon
+->  int, double, char, string, boolean, ID, ,, epsilon
+typedesctail:
+->  ,, epsilon
+typedesc:
+    F(type)
+->  int, double, char, string, boolean, ID
+type:
+->  int, double, char, string, boolean, ID
+rtype:
+    F(type), VOID
+->  int, double, char, string, boolean, ID, VOID
+emptyarraytail:
+    F(emptyarray), epsilon
+-> ., epsilon
+emptyarray:
+->  .
+farraytail:
+    F(farray), epsilon
+-> [, ., epsilon
+farray:
+-> [, .
+smtlist:
+    F(smt), epsilon
+->  ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, epsilon
+smt:
+    F(assignsmt, if, while, do, for, switch, f, meth, super, vardec, jump)
+->  ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO
+ifsmt:
+->  IF
+elsepart:
+->  ELSE
+whilesmt:
+->  WHILE
+dowhilesmt:
+->  DO
+forsmt:
+->  FOR
+forstart:
+    F(vardec, assignment), epsilon
+->  VAR, ID, THIS, epsilon
+formiddle:
+    F(expr), epsilon
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (, epsilon
+forend:
+    F(assignment), epsilon
+->  ID, THIS, epsilon
+switchsmt:
+-> SWITCH
+caseinside:
+-> CASE, DEFAULT
+caseinsidelist:
+    F(caseinside), epsilon
+-> CASE, DEFAULT, epsilon
+jumpstmt:
+-> CONTINUE, BREAK, HOME, RETURN, GOTO
+check:
+-> (
+smtblock:
+-> {
+assignsmt:
+    F(variable)
+-> ID, THIS
+assignsmtTail:
+    F(assignop, postop)
+->  =, +=, -=, *=, /=, %=, **=, ^=, ++, --
+vardec:
+->  VAR
+vardecComma:
+    F(typemodifier)
+->  STATIC, FINAL, epsilon
+vardecCommaTail:
+    F(vardecComma)
+->  STATIC, FINAL, epsilon
+vardecCommaTailRest:
+->  ,, espilon
+vardecTail:
+->  =, epsilon
+vardecTailP:
+    F(expr, list)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (, {, .
+variable:
+    F(variableTail), THIS
+->  ID, THIS
+variableTail:
+->  ID
+idnest:
+->  .
+idnestTail:
+    F(idnest)
+->  .
+index:
+->  [, epsilon
+supercall:
+->  SUPER
+fargs:
+    F(expr), epsilon
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (, epsilon
+fargstail:
+->  ,, epsilon
+fcall:
+->  FC
+methcall:
+->  MC
+methcallTail:
+    F(idnest), :
+->  ., :
+methcallend:
+    F(methcallTail), epsilon
+->  ., :, epsilon
+fcallheader:
+->  (
+newobj:
+->  NEW
+fcallTail:
+    F(index)
+->  [, epsilon
+expr:
+    F(andExpr)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+exprP:
+->  OR, ||
+andexpr:
+    F(eqExpr)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+andexprP:
+->  AND, &&
+eqexpr:
+    F(relExpr)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+eqexprP:
+->  !=, ==
+relexpr:
+    F(addExpr)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+relexprP:
+->  <, >, <=, >=
+addexpr:
+    F(multExpr)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+addexprP:
+->  +,-
+multexpr:
+    F(expoExpr)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+multexprP:
+->  *, /, %
+expoexpr:
+    F(unaryExpr)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+expoexprRest:
+->  **, ^, epsilon
+unaryexpr:
+    !, not, -, F(cast)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+cast:
+    CAST, F(primary)
+->  CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+primary:
+    F(variable, f, meth, new, constant), (
+->  ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+constant:
+->  int, hex, bin, oct, double, string, char, boolean, ref
+list:
+->  {, .
+listTail:
+->  ,, epsilon
+exprMany:
+    F(expr)
+->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
+exprManyTail:
+->  ,, epsilon
+constlist:
+->  {, .
+constlistTail:
+->  ,, epsilon
+constexprMany:
+    F(constant)
+->  int, hex, bin, oct, double, string, char, boolean, ref
+constexprManyTail:
+->  ,, epsilon
+	

@@ -52,14 +52,14 @@ typemodifier: STATIC
 func: FUNC rtype ID fparam smtblock ;
 fparam: '(' arglist ')' ;
 arglist: typedesc typedesctail
-       | /* EPSILON */ ;
+    | /* EPSILON */ ;
 
 ///////////////////////////////////////////////////
 // datatype descriptions
 ///////////////////////////////////////////////////
 
 typedesctail: ',' typedesc typedesctail
-            | /* EPSILON */ ;
+    | /* EPSILON */ ;
 typedesc: type farraytail ID ;
 type: 'int'
 	| 'double'
@@ -133,7 +133,6 @@ vardecCommaTail: vardecComma vardecCommaTailRest
     | /* EPSILON */ ;
 vardecCommaTailRest: ',' vardecComma vardecCommaTailRest
     | /* EPSILON */ ;
-
 vardecTail: '=' vardecTailP
     | /* EPSILON */ ;
 vardecTailP: expr
@@ -156,16 +155,16 @@ fargs: expr fargstail
 	| /* EPSILON */ ;
 fargstail: ',' expr fargstail
 	| /* EPSILON */ ;
-fcall: FC  ID fcallheader fcallTail ;
-methcall: MC ID index mathcallend ;
+fcall: FC ID fcallheader fcallTail ;
+methcall: MC ID index methcallend ;
 methcallTail: idnest
 	| ':' ID fcallheader ;
-mathcallend: methcallTail mathcallend
+methcallend: methcallTail methcallend
 	| /* EPSILON */ ;
 
 fcallheader: '(' fargs ')' ;
-newobj: NEW  ID fcallheader fcallTail ;
-fcallTail: index mathcallend ;
+newobj: NEW ID fcallheader fcallTail ;
+fcallTail: index methcallend ;
 
 ///////////////////////////////////////////////////
 // expressions
@@ -198,9 +197,9 @@ addexprP: addop multexpr addexprP
 multexpr: expoexpr multexprP ;
 multexprP: multop expoexpr multexprP
 	| /* EPSILON */ ;
-expoexpr: unaryexpr expoexprP ;
-expoexprP: expoop unaryexpr expoexprP
-	| /* EPSILON */ ;
+expoexpr: unaryexpr expoexprRest ;
+expoexprRest: expoop expoexpr
+    | /* EPSILON */ ;
 unaryexpr: preop cast
 	| cast ;
 cast: CAST '(' type ')' primary
