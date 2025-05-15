@@ -1,34 +1,54 @@
+
 compilationunit:
-|-->  EOF
+|-->    EOF
 topLevelUnitList:
-
-|-->  EOF
+- compilationunit
+    -> EOF
+|-->    EOF
 topLevelUnit:
-
-|-->  EOF
+- topLevelUnitList
+    -> First(topLevelUnitList), Follow(topLevelUnitList)
+    -> CLASS, FUNC, LABEL, GLOBAL, EOF
+|-->    CLASS, FUNC, LABEL, GLOBAL, EOF
 program:
-
-|-->  
+- topLevelUnit
+    -> Follow(topLevelUnit)
+    -> EOF
+|-->    EOF
 label:
-
-|-->  
+- program
+    -> Follow(program)
+    -> EOF
+|-->    EOF
 global:
-
-|-->  
+- program
+    -> Follow(program)
+    -> EOF
+|-->    EOF
 globalTail:
-
-|-->  
+- global
+    -> SEMI
+|-->    SEMI
 classdec:
-
-|-->  
+- program
+    -> Follow(program)
+    -> EOF
+|-->    EOF
 classpoly:
-
-|-->  
+- classdec
+    -> First(classbody)
+    -> {
+|-->    {
 classbody:
-
-|-->  
+- classdec
+    -> Follow(classdec)
+    -> EOF
+|-->    EOF
 classinside:
-
+- classinsidelist
+    -> First(classinsidelist)
+    -> PUBLIC, PROTECTED, PRIVATE, epsilon
+    ->
 |-->  
 classinsidelist:
 
