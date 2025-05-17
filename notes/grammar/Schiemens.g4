@@ -98,7 +98,7 @@ ifsmt: IF check smtblock elsepart ;
 elsepart: ELSE smtblock
 	| /* EPSILON */ ;
 whilesmt: WHILE check smtblock ;
-dowhilesmt: DO smtblock WHILE check ;
+dowhilesmt: DO smtblock WHILE check SEMI;
 forsmt: FOR '(' forstart SEMI formiddle SEMI forend ')' smtblock ;
 forstart: vardec
 	| assignsmt
@@ -207,6 +207,7 @@ cast: CAST '(' type ')' primary
 primary: variable
 	| fcall
 	| methcall
+	| supercall
 	| newobj
 	| '(' expr ')'
 	| constant ;

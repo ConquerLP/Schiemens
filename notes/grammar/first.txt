@@ -134,8 +134,8 @@ variableTail:
 idnest:
 ->  .
 idnestTail:
-    First(idnest)
-->  .
+    First(idnest), epsilon
+->  ., epsilon
 index:
 ->  [, epsilon
 supercall:

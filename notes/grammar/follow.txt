@@ -7,24 +7,24 @@ topLevelUnitList:
 |-->    EOF
 topLevelUnit:
 - topLevelUnitList
-    -> First(topLevelUnitList), Follow(topLevelUnitList)
-    -> CLASS, FUNC, LABEL, GLOBAL, EOF
-|-->    CLASS, FUNC, LABEL, GLOBAL, EOF
+    -> First(topLevelUnitList)
+    -> CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL
 program:
 - topLevelUnit
     -> Follow(topLevelUnit)
-    -> EOF
-|-->    EOF
+    -> CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL
 label:
 - program
     -> Follow(program)
-    -> EOF
-|-->    EOF
+    -> CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL
 global:
 - program
     -> Follow(program)
-    -> EOF
-|-->    EOF
+    -> CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL
 globalTail:
 - global
     -> SEMI
@@ -32,8 +32,8 @@ globalTail:
 classdec:
 - program
     -> Follow(program)
-    -> EOF
-|-->    EOF
+    -> CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL
 classpoly:
 - classdec
     -> First(classbody)
@@ -42,257 +42,626 @@ classpoly:
 classbody:
 - classdec
     -> Follow(classdec)
-    -> EOF
-|-->    EOF
+    -> CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL
 classinside:
+- classbody
+    -> }
 - classinsidelist
     -> First(classinsidelist)
     -> PUBLIC, PROTECTED, PRIVATE, epsilon
-    ->
-|-->  
+    -> PUBLIC, PROTECTED, PRIVATE, Follow(classinsidelist)
+    -> PUBLIC, PROTECTED, PRIVATE, }
+|-->    PUBLIC, PROTECTED, PRIVATE, }
 classinsidelist:
-
-|-->  
+- clssbody
+    -> }
+|-->    }
 classvisibility:
-
-|-->  
+- classinsidelist
+    -> First(classinside)
+    -> METH, MEMBER, CONSTR
+|-->    METH, MEMBER, CONSTR
 method:
-
-|-->  
+- classinside
+    -> Follow(classinside)
+    -> PUBLIC, PROTECTED, PRIVATE, }
+|-->    PUBLIC, PROTECTED, PRIVATE, }
 member:
-
-|-->  
+- classinside
+    -> Follow(classinside)
+    -> PUBLIC, PROTECTED, PRIVATE, }
+|-->    PUBLIC, PROTECTED, PRIVATE, }
 classconstr:
-
-|-->  
+- classinside
+    -> Follow(classinside)
+    -> PUBLIC, PROTECTED, PRIVATE, }
+|-->    PUBLIC, PROTECTED, PRIVATE, }
 typemodifier:
-
-|-->  
+- member
+    -> First(typedesc)
+    -> int, double, char, string, boolean, ID
+|-->    int, double, char, string, boolean, ID
 func:
-
-|-->  
+- program
+    -> Follow(program)
+    -> CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL
 fparam:
-
-|-->  
+- method
+    -> First(smtblock)
+    -> {
+- classconstr
+    -> First(smtblock)
+    -> {
+- func
+    -> First(smtblock)
+    -> {
+|-->    {
 arglist:
-
-|-->  
+- fparam
+    -> )
+|-->    )
 typedesctail:
-
-|-->  
+- arglist
+    -> Follow(arglist)
+    -> )
+|-->    )
 typedesc:
-
-|-->  
+- global
+    -> =
+- member
+    -> SEMI
+- arglist
+    -> First(typedesctail)
+    -> ,, epsilon
+    -> ,, Follow(typedesctail)
+    -> ,, )
+- typedesctail
+    -> Follow(typedesctail)
+    -> )
+|-->    =, SEMI, ,, )
 type:
-
-|-->  
+- rtype
+    -> First(emptyarraytail)
+    -> ., epsilon
+    -> ., Follow(emptyarraytail)
+    -> ., ID
+- cast
+    -> )
+|-->  ., ID, )
 rtype:
-
-|-->  
+- func
+    -> ID
+- method
+    -> ID
+|-->    ID
 emptyarraytail:
-
-|-->  
+- rtype
+    -> Follow(rtype)
+    -> ID
+|-->    ID
 emptyarray:
-
-|-->  
+- emptyarraytail
+    -> First(emptyarraytail)
+    -> ., epsilon
+    -> ., ID
+|-->    ., ID
 farraytail:
-
-|-->  
+- typedesc
+    -> ID
+|-->    ID
 farray:
-
-|-->  
+- farraytail
+    -> First(farraytail)
+    -> [, ., epsilon
+    -> [, ., Follow(farraytail)
+    -> [, ., ID
+|-->    [, ., ID
 smtlist:
-
-|-->  
+- smtblock
+    -> }
+|-->    }
 smt:
-
-|-->  
+- smtlist
+    -> First(smtlist)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, epsilon
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, Follow(smtlist)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+|-->    ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
 ifsmt:
-
-|-->  
+- smt
+    -> Follow(smt)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+|-->    ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
 elsepart:
-
-|-->  
+- ifsmt
+    -> Follow(ifsmt)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+|-->    ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
 whilesmt:
-
-|-->  
+- smt
+    -> Follow(smt)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+|-->    ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
 dowhilesmt:
-
-|-->  
+- smt
+    -> Follow(smt)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+|-->    ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
 forsmt:
-
-|-->  
+- smt
+    -> Follow(smt)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+|-->    ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
 forstart:
-
-|-->  
+- forsmt
+    -> SEMI
+|-->    SEMI
 formiddle:
-
-|-->  
+- forsmt
+    -> SEMI
+|-->    SEMI
 forend:
-
-|-->  
+- forsmt
+    -> )
+|-->    )
 switchsmt:
-
-|-->  
+- smt
+    -> Follow(smt)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+|-->    ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
 caseinside:
-
-|-->  
+- switchsmt
+    -> First(caseinsidelist)
+    -> CASE, DEFAULT, epsilon
+    -> CASE, DEFAULT, Follow(caseinsidelist)
+    -> CASE, DEFAULT, }
+- caseinsidelist
+    -> First(caseinsidelist)
+    -> CASE, DEFAULT, epsilon
+    -> CASE, DEFAULT, Follow(caseinsidelist)
+    -> CASE, DEFAULT, }
+|-->    CASE, DEFAULT, }
 caseinsidelist:
-
-|-->  
+- switchsmt
+    -> }
+|-->    }
 jumpstmt:
-
-|-->  
+- smt
+    -> SEMI
+|-->    SEMI
 check:
-
-|-->  
+- ifsmt
+    -> First(smtblock)
+    -> {
+- whilesmt
+    -> First(smtblock)
+    -> {
+- dowhilesmt
+    -> SEMI
+- switchsmt
+    -> {
+|-->    {, SEMI
 smtblock:
-
-|-->  
+- label
+    -> Follow(label)
+    -> CLASS, FUNC, LABEL, GLOBAL
+- method
+    -> Follow(method)
+    -> PUBLIC, PROTECTED, PRIVATE, }
+- classconstr
+    -> Follow(classconstr)
+    -> PUBLIC, PROTECTED, PRIVATE, }
+- func
+    -> Follow(func)
+    -> CLASS, FUNC, LABEL, GLOBAL
+- ifsmt
+    -> First(elsepart)
+    -> ELSE, epsilon
+    -> ELSE, Follow(elsepart)
+    -> ELSE, ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+- elsepart
+    -> Follow(elsepart)
+    -> ELSE, ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+- whilesmt
+    -> Follow(whilesmt)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+- dowhilesmt
+    -> WHILE
+- forsmt
+    -> Follow(forsmt)
+    -> ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, }
+- caseinside
+    -> Follow(smtblock)
+    -> CASE, DEFAULT, }
+|-->    CLASS, FUNC, LABEL, GLOBAL, PUBLIC, PROTECTED, PRIVATE, },
+    ELSE, ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, },
+    CASE, DEFAULT, }
 assignsmt:
-
-|-->  
+- smt
+    -> SEMI
+- forstart
+    -> Follow(forstart)
+    -> SEMI
+- forend
+    -> Follow(forend)
+    -> SEMI
+|-->    SEMI
 assignsmtTail:
-
-|-->  
+- assignsmt
+    -> Follow(assignsmt)
+    -> SEMI
+|-->    SEMI
 vardec:
-
-|-->  
+- smt
+    -> SEMI
+- forstart
+    -> Follow(forstart)
+    -> SEMI
+|-->    SEMI
 vardecComma:
-
-|-->  
+- vardec
+    -> First(vardecCommaTail)
+    -> STATIC, FINAL, epsilon
+    -> STATIC, FINAL, Follow(vardecCommaTail)
+    -> STATIC, FINAL, SEMI
+- vardecCommaTail
+    -> First(vardecCommaTailRest)
+    -> ,, espilon
+    -> ,, Follow(vardecCommaTailRest)
+    -> ,, SEMI
+- vardecCommaTailRest
+    -> First(vardecCommaTailRest)
+    -> ,, espilon
+    -> ,, Follow(vardecCommaTailRest)
+    -> ,, SEMI
+|-->    STATIC, FINAL, SEMI, ,
 vardecCommaTail:
-
-|-->  
+- vardec
+    -> Follow(vardec)
+    -> SEMI
+|-->    SEMI
 vardecCommaTailRest:
-
-|-->  
+- vardecCommaTail
+    -> Follow(vardecCommaTail)
+    -> SEMI
+|-->    SEMI
 vardecTail:
-
-|-->  
+- vardecComma
+    -> Follow(vardecComma)
+    -> STATIC, FINAL, SEMI, ,
+|-->    STATIC, FINAL, SEMI, ,
 vardecTailP:
-
-|-->  
+- vardecTail
+    -> Follow(vardecTail)
+    -> STATIC, FINAL, SEMI, ,
+|-->    STATIC, FINAL, SEMI, ,
 variable:
-
-|-->  
+- assignsmt
+    -> First(assignsmtTail)
+    -> =, +=, -=, *=, /=, %=, **=, ^=, ++, --
+- primary
+    -> Follow(primary)
+    -> **, ^, *, /, %
+|-->    =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
 variableTail:
-
-|-->  
+- variable
+    -> Follow(variable)
+    -> =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
+|-->    =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
 idnest:
-
-|-->  
+- idnestTail
+    -> First(idnestTail)
+    -> ., epsilon
+    -> ., Follow(idnestTail)
+    -> ., =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
+|-->    ., =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
 idnestTail:
-
-|-->  
+- variable
+    -> Follow(variable)
+    -> =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
+- variableTail
+    -> Follow(variableTail)
+    -> =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
+|-->    =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
 index:
-
-|-->  
+- variable
+    -> First(idnestTail)
+    -> ., epsilon
+    -> ., Follow(variable)
+    -> ., =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
+- variableTail
+    -> First(idnestTail)
+    -> ., epsilon
+    -> ., Follow(variableTail)
+    -> ., =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
+- idnest
+    -> Follow(idnest)
+    -> ., =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
+- methcall
+    -> First(methcallend)
+    -> ., :, epsilon
+    -> ., :, Follow(methcall)
+    -> ., :, SEMI, **, ^, *, /, %
+- fcallTail
+    -> First(methcallend)
+    -> ., :, epsilon
+    -> ., :, Follow(fcallTail)
+    -> ., :, SEMI, **, ^, *, /, %
+|-->    ., =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %, :, SEMI
 supercall:
-
-|-->  
+- smt
+    -> SEMI
+|-->    SEMI
 fargs:
-
-|-->  
+- fcallheader
+    -> )
+|-->    )
 fargstail:
-
-|-->  
+- fargs
+    -> Follow(fargs)
+    -> )
+|-->    )
 fcall:
-
-|-->  
+- smt
+    -> SEMI
+- primary
+    -> Follow(primary)
+    -> **, ^, *, /, %
+|--> SEMI, **, ^, *, /, %
 methcall:
-
-|-->  
+- smt
+    -> SEMI
+- primary
+    -> Follow(primary)
+    -> **, ^, *, /, %
+|-->    SEMI, **, ^, *, /, %
 methcallTail:
-
-|-->  
+- methcallend
+    -> First(methcallend)
+    -> ., :, epsilon
+    -> ., :, Follow(methcallend)
+    -> SEMI, **, ^, *, /, %
+|-->    SEMI, **, ^, *, /, %
 methcallend:
-
-|-->  
+- methcall
+    -> Follow(methcall)
+    -> SEMI, **, ^, *, /, %
+- fcallTail
+    -> Follow(fcallTail)
+    -> SEMI, **, ^, *, /, %
+|-->    SEMI, **, ^, *, /, %
 fcallheader:
-
-|-->  
+- supercall
+    -> Follow(supercall)
+    -> SEMI
+- fcall
+    -> First(fcallTail)
+    -> [, epsilon
+    -> [, Follow(fcall)
+    -> [, SEMI
+- methcallTail
+    -> Follow(methcallTail)
+    -> ., :, Follow(methcallend)
+    -> ., :, SEMI, **, ^, *, /, %
+- newobj
+    -> First(fcallTail)
+    -> [, epsilon
+    -> [, Follow(fcall)
+    -> [, SEMI
+|-->    ., :, SEMI, **, ^, *, /, %, [
 newobj:
-
-|-->  
+- primary
+    -> Follow(primary)
+    -> =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
+|-->    =, +=, -=, *=, /=, %=, **=, ^=, ++, --, **, ^, *, /, %
 fcallTail:
-
-|-->  
+- fcall
+    -> Follow(fcall)
+    -> SEMI, **, ^, *, /, %
+- fcall
+    -> Follow(fcall)
+    -> SEMI, **, ^, *, /, %
+|-->    SEMI, **, ^, *, /, %
 expr:
-
-|-->  
+- formiddle
+    -> Follow(formiddle)
+    -> SEMI
+- jumpstmt
+    -> Follow(jumpstmt)
+    -> SEMI
+- check
+    -> )
+- assignsmtTail
+    -> Follow(assignsmtTail)
+    -> SEMI
+- vardecTailP
+    -> Follow(vardecTailP)
+    -> STATIC, FINAL, SEMI, ,
+- index
+    -> ]
+- fargs
+    -> First(fargstail)
+    -> ,, epsilon
+    -> ,, Follow(fargs)
+    -> ,, )
+- fargstail
+    -> First(fargstail)
+    -> ,, Follow(fargstail)
+    -> ,, )
+- primary
+    -> )
+- exprMany
+    -> First(exprManyTail)
+    -> ,, epsilon
+    -> ,, Follow(exprMany)
+    -> ,, }
+- exprManyTail
+    -> First(exprManyTail)
+    -> ,, epsilon
+    -> ,, Follow(exprManyTail)
+    -> ,, }
+|-->    SEMI, ), ], ,, }
 exprP:
-
-|-->  
+- expr
+    -> Follow(expr)
+    -> SEMI, ), ], ,, }
+|-->    SEMI, ), ], ,, }
 andexpr:
-
-|-->  
+- expr
+    -> First(exprP)
+    -> OR, ||
+- exprP
+    -> First(exprP)
+    -> OR, ||
+|-->    OR, ||
 andexprP:
-
-|-->  
+- andexpr
+    -> Follow(andexpr)
+|-->    OR, ||
 eqexpr:
-
-|-->  
+- andexpr
+    -> First(andexprP)
+    -> AND, &&
+- andexprP
+    -> First(andexprP)
+    -> AND, &&
+|-->    AND, &&
 eqexprP:
-
-|-->  
+- eqexpr
+    -> Follow(eqexpr)
+    -> AND, &&
+|-->    AND, &&
 relexpr:
-
-|-->  
+- eqexpr
+    -> First(eqexprP)
+    -> !=, ==
+- eqexprP
+    -> First(eqexprP)
+    -> !=, ==
+|-->    !=, ==
 relexprP:
-
-|-->  
+- relexpr
+    -> Follow(relexpr)
+    -> !=, ==
+|-->    !=, ==
 addexpr:
-
-|-->  
+- relexpr
+    -> First(relexprP)
+    -> <, >, <=, >=
+- relexprP
+    -> First(relexprP)
+    -> <, >, <=, >=
+|-->    <, >, <=, >=
 addexprP:
-
-|-->  
+- addexpr
+    -> Follow(addexpr)
+    -> <, >, <=, >=
+|-->    <, >, <=, >=
 multexpr:
-
-|-->  
+- addexpr
+    -> First(addexprP)
+    -> +,-
+- addexprP
+    -> First(addexprP)
+    -> +,-
+|-->    +,-
 multexprP:
-
-|-->  
+- multexpr
+    -> Follow(multexpr)
+    ->
+|-->    +,-
 expoexpr:
-
-|-->  
+- multexpr
+    -> First(multexprP)
+    -> *, /, %
+- multexprP
+    -> First(multexprP)
+    -> *, /, %
+- expoexprRest
+    -> Follow(expoexprRest)
+    ->  *, /, %
+|-->    *, /, %
 expoexprRest:
-
-|-->  
+- expoexpr
+    -> Follow(expoexpr)
+    -> *, /, %
+|-->    *, /, %
 unaryexpr:
-
-|-->  
+- expoexpr
+    -> First(expoexprRest)
+    -> **, ^, epsilon
+    -> **, ^, Follow(expoexpr)
+    -> **, ^, *, /, %
+|-->    **, ^, *, /, %
 cast:
-
-|-->  
+- unaryexpr
+    -> Follow(unaryexpr)
+    -> **, ^, *, /, %
+|-->    **, ^, *, /, %
 primary:
-
-|-->  
+- cast
+    -> Follow(cast)
+    -> **, ^, *, /, %
+|-->    **, ^, *, /, %
 constant:
-
-|-->  
+- globalTail
+    -> Follow(globalTail)
+    -> SEMI
+- caseinside
+    -> :
+- primary
+    -> Follow(primary)
+    -> **, ^, *, /, %
+- constexprMany
+    -> First(constexprManyTail)
+    -> ,, epsilon
+    -> ,, Follow(constexprMany)
+    -> ,, }
+- constexprManyTail
+    -> First(constexprManyTail)
+    -> ,, epsilon
+    -> ,, Follow(constexprManyTail)
+    -> ,, }
+|-->    SEMI, :, **, ^, *, /, %, ,, }
 list:
-
-|-->  
+- listTail
+    -> First(listTail)
+    -> ,, epsilon
+    -> ,, Follow(listTail)
+    -> ,, }
+|-->    ,, }
 listTail:
-
-|-->  
+- list
+    -> }
+|-->    }
 exprMany:
-
-|-->  
+- list
+    -> }
+|-->    }
 exprManyTail:
-
-|-->  
+- exprMany
+    -> Follow(exprMany)
+    -> }
+|-->    }
 constlist:
-
-|-->  
+- constlistTail
+    -> First(constlistTail)
+    -> ,, epsilon
+    -> ,, Follow(constlistTail)
+    -> ,, }
+|-->    ,, }
 constlistTail:
-
-|-->  
+- constlist
+    -> }
+|-->    }
 constexprMany:
-
-|-->  
+- constlist
+    -> }
+|-->    }
 constexprManyTail:
-
-|-->  
+- constexprMany
+    -> Follow(constexprMany)
+    -> }
+|-->    }
