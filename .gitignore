@@ -40,3 +40,12 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/notes/grammar/antlr-2025-05-14-14.19.35.log
+/notes/grammar/gen/Schiemens.interp
+/notes/grammar/gen/Schiemens.tokens
+/notes/grammar/gen/SchiemensBaseListener.java
+/notes/grammar/gen/SchiemensLexer.interp
+/notes/grammar/gen/SchiemensLexer.java
+/notes/grammar/gen/SchiemensLexer.tokens
+/notes/grammar/gen/SchiemensListener.java
+/notes/grammar/gen/SchiemensParser.java
