@@ -8,23 +8,25 @@ topLevelUnitList:
 topLevelUnit:
 - topLevelUnitList
     -> First(topLevelUnitList)
-    -> CLASS, FUNC, LABEL, GLOBAL
-|-->    CLASS, FUNC, LABEL, GLOBAL
+    -> CLASS, FUNC, LABEL, GLOBAL, epsilon
+    -> CLASS, FUNC, LABEL, GLOBAL, Follow(topLevelUnitList)
+    -> CLASS, FUNC, LABEL, GLOBAL, EOF
+|-->    CLASS, FUNC, LABEL, GLOBAL, EOF
 program:
 - topLevelUnit
     -> Follow(topLevelUnit)
     -> CLASS, FUNC, LABEL, GLOBAL
-|-->    CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL, EOF
 label:
 - program
     -> Follow(program)
     -> CLASS, FUNC, LABEL, GLOBAL
-|-->    CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL, EOF
 global:
 - program
     -> Follow(program)
     -> CLASS, FUNC, LABEL, GLOBAL
-|-->    CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL, EOF
 globalTail:
 - global
     -> SEMI
@@ -33,7 +35,7 @@ classdec:
 - program
     -> Follow(program)
     -> CLASS, FUNC, LABEL, GLOBAL
-|-->    CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL, EOF
 classpoly:
 - classdec
     -> First(classbody)
@@ -43,10 +45,8 @@ classbody:
 - classdec
     -> Follow(classdec)
     -> CLASS, FUNC, LABEL, GLOBAL
-|-->    CLASS, FUNC, LABEL, GLOBAL
+|-->    CLASS, FUNC, LABEL, GLOBAL, EOF
 classinside:
-- classbody
-    -> }
 - classinsidelist
     -> First(classinsidelist)
     -> PUBLIC, PROTECTED, PRIVATE, epsilon
@@ -246,7 +246,7 @@ check:
 smtblock:
 - label
     -> Follow(label)
-    -> CLASS, FUNC, LABEL, GLOBAL
+    -> CLASS, FUNC, LABEL, GLOBAL, EOF
 - method
     -> Follow(method)
     -> PUBLIC, PROTECTED, PRIVATE, }
@@ -276,8 +276,8 @@ smtblock:
     -> Follow(smtblock)
     -> CASE, DEFAULT, }
 |-->    CLASS, FUNC, LABEL, GLOBAL, PUBLIC, PROTECTED, PRIVATE, },
-    ELSE, ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO, },
-    CASE, DEFAULT, }
+    ELSE, ID, THIS, IF, WHILE, DO, FOR, SWITCH, FC, MC, SUPER, VAR, CONTINUE, BREAK, HOME, RETURN, GOTO,
+    CASE, DEFAULT, EOF
 assignsmt:
 - smt
     -> SEMI
@@ -502,109 +502,134 @@ expr:
     -> ,, epsilon
     -> ,, Follow(exprManyTail)
     -> ,, }
-|-->    SEMI, ), ], ,, }
+|-->    SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 exprP:
 - expr
     -> Follow(expr)
-    -> SEMI, ), ], ,, }
-|-->    SEMI, ), ], ,, }
+    -> SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 andexpr:
 - expr
     -> First(exprP)
-    -> OR, ||
+    -> OR, ||, epsilon
+    -> OR, ||, Follow(expr)
+    -> OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 - exprP
     -> First(exprP)
-    -> OR, ||
-|-->    OR, ||
+    -> OR, ||, epsilon
+    -> OR, ||, Follow(expr)
+    -> OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 andexprP:
 - andexpr
     -> Follow(andexpr)
-|-->    OR, ||
+    -> OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 eqexpr:
 - andexpr
     -> First(andexprP)
-    -> AND, &&
+    -> AND, &&, epsilon
+    -> AND, &&, Follow(andexpr)
+    -> AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 - andexprP
     -> First(andexprP)
-    -> AND, &&
-|-->    AND, &&
+    -> AND, &&, epsilon
+    -> AND, &&, Follow(andexpr)
+    -> AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 eqexprP:
 - eqexpr
     -> Follow(eqexpr)
-    -> AND, &&
-|-->    AND, &&
+    -> AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 relexpr:
 - eqexpr
     -> First(eqexprP)
-    -> !=, ==
+    -> !=, ==, epsilon
+    -> !=, ==, Follow(eqexpr)
+    -> !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 - eqexprP
     -> First(eqexprP)
-    -> !=, ==
-|-->    !=, ==
+    -> !=, ==, epsilon
+    -> !=, ==, Follow(eqexpr)
+    -> !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 relexprP:
 - relexpr
     -> Follow(relexpr)
-    -> !=, ==
-|-->    !=, ==
+    -> !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 addexpr:
 - relexpr
     -> First(relexprP)
-    -> <, >, <=, >=
+    -> <, >, <=, >=, epsilon
+    -> <, >, <=, >=, Follow(relexpr)
+    -> <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 - relexprP
     -> First(relexprP)
-    -> <, >, <=, >=
-|-->    <, >, <=, >=
+    -> <, >, <=, >=, epsilon
+    -> <, >, <=, >=, Follow(relexpr)
+    -> <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 addexprP:
 - addexpr
     -> Follow(addexpr)
-    -> <, >, <=, >=
-|-->    <, >, <=, >=
+    -> <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 multexpr:
 - addexpr
     -> First(addexprP)
-    -> +,-
+    -> +,-, epsilon
+    -> +,-, Follow(addexpr)
+    -> +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 - addexprP
     -> First(addexprP)
-    -> +,-
-|-->    +,-
+    -> +,-, epsilon
+    -> +,-, Follow(addexpr)
+    -> +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 multexprP:
 - multexpr
     -> Follow(multexpr)
-    ->
-|-->    +,-
+    -> +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 expoexpr:
 - multexpr
     -> First(multexprP)
-    -> *, /, %
+    -> *, /, %, epsilon
+    -> *, /, %, Follow(multexpr)
+    -> *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 - multexprP
     -> First(multexprP)
-    -> *, /, %
+    -> *, /, %, epsilon
+    -> *, /, %, Follow(multexpr)
+    -> *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 - expoexprRest
     -> Follow(expoexprRest)
-    ->  *, /, %
-|-->    *, /, %
+    -> *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 expoexprRest:
 - expoexpr
     -> Follow(expoexpr)
     -> *, /, %
-|-->    *, /, %
+|-->    *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 unaryexpr:
 - expoexpr
     -> First(expoexprRest)
     -> **, ^, epsilon
     -> **, ^, Follow(expoexpr)
-    -> **, ^, *, /, %
-|-->    **, ^, *, /, %
+    -> **, ^, *, /, %, *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    **, ^, *, /, %, *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 cast:
 - unaryexpr
     -> Follow(unaryexpr)
-    -> **, ^, *, /, %
-|-->    **, ^, *, /, %
+    -> **, ^, *, /, %, *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    **, ^, *, /, %, *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 primary:
 - cast
     -> Follow(cast)
-    -> **, ^, *, /, %
-|-->    **, ^, *, /, %
+    -> **, ^, *, /, %, *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
+|-->    **, ^, *, /, %, *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 constant:
 - globalTail
     -> Follow(globalTail)
@@ -613,7 +638,7 @@ constant:
     -> :
 - primary
     -> Follow(primary)
-    -> **, ^, *, /, %
+    -> **, ^, *, /, %, *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 - constexprMany
     -> First(constexprManyTail)
     -> ,, epsilon
@@ -624,7 +649,7 @@ constant:
     -> ,, epsilon
     -> ,, Follow(constexprManyTail)
     -> ,, }
-|-->    SEMI, :, **, ^, *, /, %, ,, }
+|-->    SEMI, :, **, ^, *, /, %, *, /, %, +,-, <, >, <=, >=, !=, ==, AND, &&, OR, ||, SEMI, ), STATIC, FINAL, SEMI, ,, ], }
 list:
 - listTail
     -> First(listTail)

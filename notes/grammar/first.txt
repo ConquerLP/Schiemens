@@ -1,10 +1,10 @@
 
 compilationunit:
     First(topLevelUnitList)
-->  CLASS, FUNC, LABEL, GLOBAL
+->  CLASS, FUNC, LABEL, GLOBAL, epsilon
 topLevelUnitList:
     First(topLevelUnit)
-->  CLASS, FUNC, LABEL, GLOBAL
+->  CLASS, FUNC, LABEL, GLOBAL, epsilon
 topLevelUnit:
     First(program)
 ->  CLASS, FUNC, LABEL, GLOBAL
@@ -21,7 +21,7 @@ globalTail:
 classdec:
 ->  CLASS
 classpoly:
-->  EXTENDS
+->  EXTENDS, epsilon
 classbody:
 ->  {
 classinside:
@@ -76,7 +76,7 @@ smt:
 ifsmt:
 ->  IF
 elsepart:
-->  ELSE
+->  ELSE, epsilon
 whilesmt:
 ->  WHILE
 dowhilesmt:
@@ -166,32 +166,32 @@ expr:
     First(andExpr)
 ->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
 exprP:
-->  OR, ||
+->  OR, ||, epsilon
 andexpr:
     First(eqExpr)
 ->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
 andexprP:
-->  AND, &&
+->  AND, &&, epsilon
 eqexpr:
     First(relExpr)
 ->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
 eqexprP:
-->  !=, ==
+->  !=, ==, epsilon
 relexpr:
     First(addExpr)
 ->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
 relexprP:
-->  <, >, <=, >=
+->  <, >, <=, >=, epsilon
 addexpr:
     First(multExpr)
 ->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
 addexprP:
-->  +,-
+->  +,-, epsilon
 multexpr:
     First(expoExpr)
 ->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
 multexprP:
-->  *, /, %
+->  *, /, %, epsilon
 expoexpr:
     First(unaryExpr)
 ->  !, not, -, CAST, ID, THIS, FC, MC, NEW, int, hex, bin, oct, double, string, char, boolean, ref, (
