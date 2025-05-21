@@ -29,13 +29,15 @@ public class CompilationApp {
         }
         */
 
-        Path sourcePath = Path.of("D:\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
+        //Path sourcePath = Path.of("D:\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
         //Path sourcePath = Path.of("C:\\Users\\Stefan\\Desktop\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
+        Path sourcePath = Path.of("C:\\Users\\Insoft\\Desktop\\DirtyDan\\Schiemens\\src\\main\\java\\ch\\schiemens\\frontend\\cli\\test.txt");
         LexerLogger logger = new LexerLogger(sourcePath);
         try {
             Lexer lexer = new Lexer(sourcePath, logger);
             Token token = lexer.nextToken();
             while (token.getType() != TokenType.EOF) {
+                System.out.println(token);
                 token = lexer.nextToken();
             }
         } catch (IOException e) {

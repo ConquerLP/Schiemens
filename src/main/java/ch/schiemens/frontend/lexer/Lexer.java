@@ -76,13 +76,18 @@ public class Lexer {
     public Token nextToken() throws IOException, LexicalException {
         initTokenState();
         Token token = null;
-        currentInt = lexerBuffer.consume();
-        currentChar = (char) currentInt;
-        while (token == null) {
+        do {
+            if(currentTokenState != TokenState.CREATE && currentTokenState != TokenState.CREATE_B) {
+                currentInt = lexerBuffer.consume();
+                currentChar = (char) currentInt;
+            }
             switch (currentTokenState) {
                 case START: {
                     if (LexerBuffer.isEOF(currentInt)) setState(TokenState.EOF);
-                    else if (isWhitespace(currentChar)) setState(TokenState.START);
+                    else if (isWhitespace(currentChar)) {
+                        setState(TokenState.START);
+                        tokenValue.delete(0, tokenValue.length());
+                    }
                     else if (currentChar == '0') setState(TokenState.NUM_INT);
                     else if (isDecimal(currentChar)) setState(TokenState.INT);
                     else if (isIdentifierStart(currentChar)) setState(TokenState.IDENTIFIER);
@@ -423,10 +428,8 @@ public class Lexer {
                 }
                 break;
             }
-            System.out.println(currentChar);
-            currentInt = lexerBuffer.consume();
-            currentChar = (char) currentInt;
-        }
+
+        } while(token == null);
         return token;
     }
 
