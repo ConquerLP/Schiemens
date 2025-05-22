@@ -61,6 +61,12 @@ public class Lexer {
         tokenValue.append(currentChar);
     }
 
+    private void setState(TokenState state, TokenState oldTokenState) {
+        this.oldTokenState = oldTokenState;
+        currentTokenState = state;
+        tokenValue.append(currentChar);
+    }
+
     private void handleInvalidEOFInState(TokenState state) {
         logger.logError("Unexpected EOF in state: " + state);
         setState(TokenState.EOF);
@@ -335,31 +341,27 @@ public class Lexer {
                 break;
                 case CHAR_SINGLE: {
                     if (checkEOF(TokenState.CHAR_SINGLE, currentInt)) break;
-                    else if (currentChar == '\'') setState(TokenState.CHAR_E);
+                    else if (currentChar == '\'') setState(TokenState.CREATE, TokenState.CHAR_E);
                     else setState(TokenState.ERROR);
                 }
                 break;
                 case CHAR_MULTI_S: {
                     if (checkEOF(TokenState.CHAR_MULTI_S, currentInt)) break;
-                    else if (isValidChar(currentChar)) setState(TokenState.CHAR_MULTI_E);
+                    else if (isValidChar(currentChar)) setState(TokenState.CREATE, TokenState.CHAR_E);
                     else setState(TokenState.ERROR);
                 }
                 break;
                 case CHAR_MULTI_E: {
                     if (checkEOF(TokenState.CHAR_MULTI_E, currentInt)) break;
-                    else if (currentChar == '\'') setState(TokenState.CHAR_MULTI_E);
+                    else if (currentChar == '\'') setState(TokenState.CREATE, TokenState.CHAR_E);
                     else setState(TokenState.ERROR);
-                }
-                break;
-                case CHAR_E: {
-                    setState(TokenState.CREATE);
                 }
                 break;
                 //string
                 case STRING_S: {
                     if (checkEOF(TokenState.STRING_S, currentInt)) break;
                     else if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
-                    else if (currentChar == '"') setState(TokenState.STRING_E);
+                    else if (currentChar == '"') setState(TokenState.CREATE, TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
                     else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
                     else setState(TokenState.ERROR);
@@ -368,7 +370,7 @@ public class Lexer {
                 case STRING_SINGLE: {
                     if (checkEOF(TokenState.STRING_SINGLE, currentInt)) break;
                     else if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
-                    else if (currentChar == '"') setState(TokenState.STRING_E);
+                    else if (currentChar == '"') setState(TokenState.CREATE, TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
                     else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
                     else setState(TokenState.ERROR);
@@ -384,14 +386,10 @@ public class Lexer {
                 case STRING_MULTI_E: {
                     if (checkEOF(TokenState.STRING_MULTI_E, currentInt)) break;
                     else if (isCarriageReturn(currentChar)) setState(TokenState.ERROR);
-                    else if (currentChar == '"') setState(TokenState.STRING_E);
+                    else if (currentChar == '"') setState(TokenState.CREATE, TokenState.STRING_E);
                     else if (currentChar == '\\') setState(TokenState.STRING_MULTI_S);
                     else if (isValidChar(currentChar)) setState(TokenState.STRING_SINGLE);
                     else setState(TokenState.ERROR);
-                }
-                break;
-                case STRING_E: {
-                    setState(TokenState.CREATE);
                 }
                 break;
                 //identifier and keywords

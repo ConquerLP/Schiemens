@@ -67,6 +67,7 @@ public class TokenFactory {
 
     public Token createToken(String value, TokenState state) {
         return switch (state) {
+            case NUM_INT -> makeToken(TokenType.L_INT, value);
             case INT -> makeToken(TokenType.L_INT, value);
             case DOUBLE_E -> makeToken(TokenType.L_DOUBLE, value);
             case OCTAL_E -> makeToken(TokenType.L_OCTAL, value);
@@ -108,7 +109,7 @@ public class TokenFactory {
             case S_AND_E -> makeToken(TokenType.S_AND_ALT, value);
             case S_EQ -> makeToken(TokenType.S_ASSIGN, value);
             case S_EQ_EQ -> makeToken(TokenType.S_EQ, value);
-            case CHAR_E -> makeToken(TokenType.L_CHAR, value);
+            case CHAR_E -> makeToken(TokenType.L_CHAR, value.replaceAll("'", ""));
             case STRING_E -> makeToken(TokenType.L_STRING, value);
             case S_INLINE_COMMENT -> makeToken(TokenType.INLINE_COMMENT, "");
             case MULTI_LINE_COMMENT_E -> makeToken(TokenType.MULTI_LINE_COMMENT, "");

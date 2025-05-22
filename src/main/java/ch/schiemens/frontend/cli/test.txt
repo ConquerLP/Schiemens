@@ -1,3 +1,14 @@
+
+'a'
+'\t'
+
+"\\\t"
+""
+"afsasf"
+"\nafsasf"
+"afsasf\n"
+"afs\nasf\n"
+
 //
 0
 1
@@ -11,14 +22,7 @@
 0b01
 0o1
 0o1234567
-""
-"afsasf"
-"\nafsasf"
-"afsasf\n"
-"afs\nasf\n"
-'a'
-'a'
-'\t'
+
 
 //;.,()[]{}+-*/%=!<>
 
